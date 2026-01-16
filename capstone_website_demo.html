@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicare Part D Formulary Restrictiveness | Naomi Sahle MPH Capstone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        html { scroll-behavior: smooth; }
+        .gradient-bg { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); }
+        .section-fade { animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card:hover { transform: translateY(-4px); transition: transform 0.2s; }
+        .nav-link:hover { color: #3b82f6; }
+        .citation { font-size: 0.75rem; vertical-align: super; color: #3b82f6; cursor: pointer; }
+        .citation:hover { text-decoration: underline; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50">
+        <div class="max-w-6xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <span class="font-bold text-lg text-gray-800">NS Capstone</span>
+                <div class="hidden md:flex gap-8 text-sm">
+                    <a href="#overview" class="nav-link text-gray-600 hover:text-blue-600 transition">Overview</a>
+                    <a href="#background" class="nav-link text-gray-600 hover:text-blue-600 transition">Background</a>
+                    <a href="#methods" class="nav-link text-gray-600 hover:text-blue-600 transition">Methods</a>
+                    <a href="#findings" class="nav-link text-gray-600 hover:text-blue-600 transition">Findings</a>
+                    <a href="#references" class="nav-link text-gray-600 hover:text-blue-600 transition">References</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="gradient-bg text-white pt-24 pb-16">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="max-w-4xl">
+                <p class="text-blue-200 text-sm font-medium mb-3">MPH CAPSTONE PROJECT • UNIVERSITY OF PENNSYLVANIA</p>
+                <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-6">
+                    Geographic and Temporal Variation in Medicare Part D Formulary Restrictiveness for Diabetes Medications
+                </h1>
+                <p class="text-xl text-blue-100 mb-8">2020–2025</p>
+                
+                <div class="flex flex-wrap gap-4 mb-8">
+                    <div class="bg-white/10 backdrop-blur rounded-lg px-4 py-2">
+                        <span class="text-blue-200 text-xs">Author</span>
+                        <p class="font-semibold">Naomi Sahle</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur rounded-lg px-4 py-2">
+                        <span class="text-blue-200 text-xs">Program</span>
+                        <p class="font-semibold">Health Policy & Innovation</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur rounded-lg px-4 py-2">
+                        <span class="text-blue-200 text-xs">Mentor</span>
+                        <p class="font-semibold">Dr. Anne Shofer</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur rounded-lg px-4 py-2">
+                        <span class="text-blue-200 text-xs">Expected</span>
+                        <p class="font-semibold">Spring 2026</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Key Stats Banner -->
+    <section class="bg-white border-b">
+        <div class="max-w-6xl mx-auto px-6 py-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="stat-card text-center p-4 rounded-lg bg-red-50 cursor-default">
+                    <div class="text-4xl font-bold text-red-600">94.6%</div>
+                    <div class="text-sm text-gray-600 mt-1">GLP-1 PA Rate (2025)</div>
+                </div>
+                <div class="stat-card text-center p-4 rounded-lg bg-blue-50 cursor-default">
+                    <div class="text-4xl font-bold text-blue-600">5.3%</div>
+                    <div class="text-sm text-gray-600 mt-1">GLP-1 PA Rate (2020)</div>
+                </div>
+                <div class="stat-card text-center p-4 rounded-lg bg-purple-50 cursor-default">
+                    <div class="text-4xl font-bold text-purple-600">18×</div>
+                    <div class="text-sm text-gray-600 mt-1">Increase in 5 Years</div>
+                </div>
+                <div class="stat-card text-center p-4 rounded-lg bg-green-50 cursor-default">
+                    <div class="text-4xl font-bold text-green-600">14M+</div>
+                    <div class="text-sm text-gray-600 mt-1">Medicare Beneficiaries w/ Diabetes</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section id="overview" class="py-16">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="max-w-3xl">
+                <h2 class="text-3xl font-bold mb-6">Project Overview</h2>
+                <div class="prose prose-lg text-gray-700 space-y-4">
+                    <p>
+                        This capstone project systematically characterizes <strong>county-level and temporal variation</strong> 
+                        in Medicare Part D formulary restrictiveness for diabetes medications from 2020 through 2025—a 
+                        period marked by transformative policy changes including the Part D Senior Savings Model, the 
+                        Inflation Reduction Act's insulin cap, and the 2025 benefit redesign.
+                    </p>
+                    <p>
+                        Using freely available CMS public data, this project documents how plans responded to these 
+                        policy shifts through changes in prior authorization requirements, tier placement, and other 
+                        utilization management tools across four major diabetes medication classes.
+                    </p>
+                </div>
+                
+                <!-- Drug Classes -->
+                <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-lg p-4 shadow-sm border-l-4 border-red-500">
+                        <h4 class="font-semibold text-gray-800">GLP-1 Receptor Agonists</h4>
+                        <p class="text-sm text-gray-500 mt-1">Ozempic, Trulicity, Mounjaro, Rybelsus</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 shadow-sm border-l-4 border-blue-500">
+                        <h4 class="font-semibold text-gray-800">Insulin</h4>
+                        <p class="text-sm text-gray-500 mt-1">Rapid, long-acting, mixed formulations</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 shadow-sm border-l-4 border-green-500">
+                        <h4 class="font-semibold text-gray-800">SGLT2 Inhibitors</h4>
+                        <p class="text-sm text-gray-500 mt-1">Jardiance, Farxiga, Invokana</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 shadow-sm border-l-4 border-purple-500">
+                        <h4 class="font-semibold text-gray-800">DPP-4 Inhibitors</h4>
+                        <p class="text-sm text-gray-500 mt-1">Januvia, Tradjenta, Onglyza</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Background Section -->
+    <section id="background" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="max-w-3xl">
+                <h2 class="text-3xl font-bold mb-6">Background</h2>
+                
+                <div class="prose prose-lg text-gray-700 space-y-5">
+                    <p>
+                        Type 2 diabetes affects approximately 24.4% of Americans aged 65 and older, representing over 
+                        14 million Medicare beneficiaries and making it one of the most prevalent chronic conditions 
+                        in the Medicare population.<span class="citation" onclick="scrollToRef(1)">1</span> Effective 
+                        diabetes management requires consistent access to prescription medications, yet Medicare Part D 
+                        formularies (the lists of covered drugs and their associated access restrictions) have become 
+                        increasingly restrictive over time. Between 2011 and 2020, prior authorization, step therapy, 
+                        and quantity limits expanded dramatically, with restricted compounds increasing from 31.9% to 
+                        44.4% across Part D plans.<span class="citation" onclick="scrollToRef(2)">2</span> Most notably, 
+                        prior authorization requirements for GLP-1s surged from approximately 5% of plans in the early 
+                        2020s to nearly 100% by 2025.<span class="citation" onclick="scrollToRef(3)">3,4</span> These 
+                        formulary restrictions create substantial barriers to medication access for millions of 
+                        beneficiaries and may disproportionately affect vulnerable populations including racial and 
+                        ethnic minorities, lower-income beneficiaries, and those with limited health literacy who face 
+                        greater challenges navigating administrative barriers.
+                    </p>
+
+                    <p>
+                        The period from 2020 to 2025 represents a particularly dynamic era for Part D policy, marked 
+                        by multiple major reforms aimed at improving medication affordability and access. The Part D 
+                        Senior Savings Model (2021-2023) allowed plans to voluntarily cap insulin copayments at $35 
+                        per month, demonstrating improved adherence in participating plans.<span class="citation" onclick="scrollToRef(5)">5</span> 
+                        The Inflation Reduction Act of 2022 expanded this insulin cap program-wide beginning in January 
+                        2023 and introduced additional cost-sharing protections including a $2,000 annual out-of-pocket 
+                        spending cap effective January 2025.<span class="citation" onclick="scrollToRef(6)">6</span> 
+                        However, these same policy changes fundamentally restructured Part D financial liability, 
+                        increasing plans' catastrophic phase costs from 15% to 60% for brand-name drugs and creating 
+                        incentives for more aggressive utilization management.
+                    </p>
+
+                    <p>
+                        Against this policy backdrop, existing research establishes that formulary restrictions impact 
+                        medication access and utilization patterns. Studies consistently demonstrate that prior 
+                        authorization requirements, step therapy protocols, and higher cost-sharing tiers reduce rates 
+                        of medication initiation and continuation.<span class="citation" onclick="scrollToRef(7)">7</span> 
+                        Variation in access to diabetes medications has been documented across regions, with initiation 
+                        rates for newer glucose-lowering drugs varying fivefold across U.S. hospital referral regions. 
+                        Additionally, substantial racial and socioeconomic disparities exist in medication access, with 
+                        Black beneficiaries experiencing lower rates of SGLT2 inhibitor and GLP-1 receptor agonist 
+                        initiation even after adjusting for clinical factors. The Part D Senior Savings Model evaluation 
+                        demonstrated that reduced insulin cost-sharing improved medication adherence among participating 
+                        beneficiaries.
+                    </p>
+
+                    <p>
+                        Despite these dramatic policy shifts, comprehensive characterization of how formulary 
+                        restrictiveness varies across counties and over time remains limited and underexplored. For 
+                        example, although national trends in formulary restrictions have been documented for the 
+                        2011-2020 period, comprehensive characterization of county-level variation in formulary 
+                        restrictiveness remains lacking. Preliminary evidence suggests regional disparities exist, 
+                        but systematic measurement across multiple diabetes medication classes has not been conducted. 
+                        Additionally, despite the dramatic formulary changes occurring during 2020-2025 (particularly 
+                        the near-universal adoption of prior authorization for GLP-1 receptor agonists), temporal 
+                        trends during this critical policy transition remain poorly documented. Moreover, existing 
+                        approaches for measuring formulary restrictiveness vary widely across studies,<span class="citation" onclick="scrollToRef(8)">8</span> 
+                        limiting comparability and hindering development of validated metrics that can be applied 
+                        consistently in future research and policy monitoring.
+                    </p>
+
+                    <p>
+                        This project addresses these gaps by systematically characterizing county-level and temporal 
+                        variation in Medicare Part D formulary restrictiveness for diabetes medications from 2020 
+                        through 2025. By documenting the extent and distribution of this variation, findings will 
+                        identify markets where restrictive formularies may particularly affect vulnerable populations. 
+                        The temporal analysis will reveal how plans responded to major policy changes, informing 
+                        ongoing debates about balancing medication cost control with ensuring access to effective 
+                        therapies. This project will establish validated measures of restrictiveness using publicly 
+                        accessible data sources, providing a replicable framework for continued monitoring of Part D 
+                        formulary policies.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Policy Timeline -->
+    <section class="py-16 bg-gray-100">
+        <div class="max-w-6xl mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-8">Policy Timeline</h2>
+            <div class="relative">
+                <div class="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-blue-200"></div>
+                <div class="space-y-12">
+                    <!-- 2020 -->
+                    <div class="relative flex items-center">
+                        <div class="w-1/2 pr-8 text-right">
+                            <div class="bg-white rounded-lg p-4 shadow-sm inline-block">
+                                <span class="text-blue-600 font-bold">2020</span>
+                                <p class="text-gray-700 mt-1">Baseline year: ~5% GLP-1 PA rate</p>
+                            </div>
+                        </div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-blue-500 rounded-full"></div>
+                        <div class="w-1/2 pl-8"></div>
+                    </div>
+                    <!-- 2021 -->
+                    <div class="relative flex items-center">
+                        <div class="w-1/2 pr-8"></div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-blue-500 rounded-full"></div>
+                        <div class="w-1/2 pl-8">
+                            <div class="bg-white rounded-lg p-4 shadow-sm inline-block">
+                                <span class="text-blue-600 font-bold">2021</span>
+                                <p class="text-gray-700 mt-1">Part D Senior Savings Model begins</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 2023 -->
+                    <div class="relative flex items-center">
+                        <div class="w-1/2 pr-8 text-right">
+                            <div class="bg-white rounded-lg p-4 shadow-sm inline-block">
+                                <span class="text-blue-600 font-bold">Jan 2023</span>
+                                <p class="text-gray-700 mt-1">IRA $35 insulin cap takes effect</p>
+                            </div>
+                        </div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-blue-500 rounded-full"></div>
+                        <div class="w-1/2 pl-8"></div>
+                    </div>
+                    <!-- 2024 -->
+                    <div class="relative flex items-center">
+                        <div class="w-1/2 pr-8"></div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-red-500 rounded-full"></div>
+                        <div class="w-1/2 pl-8">
+                            <div class="bg-red-50 rounded-lg p-4 shadow-sm inline-block border border-red-200">
+                                <span class="text-red-600 font-bold">2024</span>
+                                <p class="text-gray-700 mt-1">GLP-1 PA surges to ~78%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 2025 -->
+                    <div class="relative flex items-center">
+                        <div class="w-1/2 pr-8 text-right">
+                            <div class="bg-red-50 rounded-lg p-4 shadow-sm inline-block border border-red-200">
+                                <span class="text-red-600 font-bold">Jan 2025</span>
+                                <p class="text-gray-700 mt-1">Benefit redesign: Plan liability 15%→60%<br>GLP-1 PA reaches ~95%</p>
+                            </div>
+                        </div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-red-500 rounded-full"></div>
+                        <div class="w-1/2 pl-8"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Methods Section -->
+    <section id="methods" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="max-w-3xl">
+                <h2 class="text-3xl font-bold mb-6">Methods</h2>
+                
+                <div class="space-y-8">
+                    <!-- Data Sources -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3 text-gray-800">Data Sources</h3>
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <ul class="space-y-3 text-gray-700">
+                                <li class="flex items-start gap-3">
+                                    <span class="text-blue-500 mt-1">●</span>
+                                    <span><strong>CMS Part D Formulary Files</strong> (2020-2025): Drug-level coverage, tier placement, prior authorization, step therapy, quantity limits</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="text-blue-500 mt-1">●</span>
+                                    <span><strong>CMS Part D Enrollment Files</strong>: Plan-level enrollment by county for weighting</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="text-blue-500 mt-1">●</span>
+                                    <span><strong>Plan Characteristics Files</strong>: Plan type (MA-PD vs. PDP), service areas</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Restrictiveness Score -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3 text-gray-800">Restrictiveness Score Construction</h3>
+                        <p class="text-gray-700 mb-4">
+                            A count-based restrictiveness score (0-4 scale) is calculated for each drug-plan-year combination:
+                        </p>
+                        <div class="bg-blue-50 rounded-lg p-6 font-mono text-sm">
+                            <p class="text-gray-800">Score = </p>
+                            <ul class="ml-4 mt-2 space-y-1 text-gray-700">
+                                <li>+ 1 if Prior Authorization required</li>
+                                <li>+ 1 if Step Therapy required</li>
+                                <li>+ 1 if Quantity Limits applied</li>
+                                <li>+ 1 if Tier 4 or 5 (high cost-sharing)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Geographic Aggregation -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3 text-gray-800">Geographic Aggregation</h3>
+                        <p class="text-gray-700">
+                            County-level restrictiveness scores are calculated using <strong>enrollment-weighted averages</strong> 
+                            across all plans serving each county. This approach reflects the actual formulary environment 
+                            experienced by beneficiaries based on where they are enrolled, rather than giving equal weight 
+                            to small and large plans.
+                        </p>
+                    </div>
+
+                    <!-- Analysis -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3 text-gray-800">Analysis Approach</h3>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="font-semibold text-gray-800 mb-2">Temporal Analysis</h4>
+                                <p class="text-sm text-gray-600">Track national trends in restrictiveness by drug class across 2020-2025, identifying inflection points around policy changes</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="font-semibold text-gray-800 mb-2">Geographic Analysis</h4>
+                                <p class="text-sm text-gray-600">Map county-level variation in restrictiveness, identify high- and low-restriction markets</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Findings Section (with Charts) -->
+    <section id="findings" class="py-16 bg-gray-100">
+        <div class="max-w-6xl mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-2">Preliminary Findings</h2>
+            <p class="text-gray-500 mb-8">Based on synthetic demonstration data • Real analysis forthcoming</p>
+
+            <!-- Chart 1: Temporal Trends -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4">Prior Authorization Requirements Over Time</h3>
+                <div class="h-80">
+                    <canvas id="temporalChart"></canvas>
+                </div>
+                <p class="text-sm text-gray-500 mt-4">
+                    <strong>Key Finding:</strong> GLP-1 receptor agonist PA requirements remained stable at ~5-11% 
+                    through 2023, then surged dramatically to 78% in 2024 and 95% in 2025 following the IRA benefit 
+                    redesign. In contrast, insulin PA requirements <em>decreased</em> from 18% to 4% as the $35 
+                    copay cap reduced plans' incentives for utilization management.
+                </p>
+            </div>
+
+            <!-- Chart 2: Drug Class Comparison -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4">Restrictiveness Score by Drug Class (2025)</h3>
+                <div class="h-64">
+                    <canvas id="classChart"></canvas>
+                </div>
+                <p class="text-sm text-gray-500 mt-4">
+                    <strong>Key Finding:</strong> GLP-1 receptor agonists show the highest overall restrictiveness 
+                    (score 2.7/4.0), driven primarily by near-universal prior authorization. All non-insulin 
+                    diabetes medication classes show elevated restrictiveness compared to insulin.
+                </p>
+            </div>
+
+            <!-- Geographic Variation Table -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h3 class="text-xl font-semibold mb-4">Geographic Variation: GLP-1 Restrictiveness by County (2025)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b bg-gray-50">
+                                <th class="text-left p-3">County</th>
+                                <th class="text-left p-3">State</th>
+                                <th class="text-right p-3">Restrictiveness Score</th>
+                                <th class="text-right p-3">% Plans w/ PA</th>
+                                <th class="text-right p-3"># Plans</th>
+                            </tr>
+                        </thead>
+                        <tbody id="geoTable">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-sm text-gray-500 mt-4">
+                    <strong>Key Finding:</strong> County-level variation in GLP-1 restrictiveness is relatively 
+                    narrow in 2025 (range: 2.53-2.73), reflecting the near-universal adoption of prior authorization 
+                    across all markets. Earlier years show greater geographic variation.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- References Section -->
+    <section id="references" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="max-w-3xl">
+                <h2 class="text-3xl font-bold mb-6">References</h2>
+                <ol class="space-y-4 text-sm text-gray-700">
+                    <li id="ref1" class="pl-6 -indent-6">
+                        1. Chen WH, Li Y, Yang L, et al. Geographic variation and racial disparities in adoption of newer glucose-lowering drugs with cardiovascular benefits among US Medicare beneficiaries with type 2 diabetes. <em>PLOS ONE</em>. 2024;19(1):e0297208.
+                    </li>
+                    <li id="ref2" class="pl-6 -indent-6">
+                        2. Joyce G, Huckfeldt P, Gong C, et al. Medicare Part D plans greatly increased utilization restrictions on prescription drugs, 2011–20. <em>Health Affairs</em>. 2024;43(3):390-398.
+                    </li>
+                    <li id="ref3" class="pl-6 -indent-6">
+                        3. Klebanoff MJ, Adusumalli S, Yang L, et al. Coverage and out-of-pocket costs for GLP-1 receptor agonists in Medicare Part D, 2020-2025. <em>JAMA</em>. 2025 (Research Letter).
+                    </li>
+                    <li id="ref4" class="pl-6 -indent-6">
+                        4. Liu X, Lu CA, Shih YT, Jiang C. Coverage and prior authorization policies for semaglutide and tirzepatide in Medicare Part D plans, 2020-2024. <em>JAMA Network Open</em>. 2025;8(8):e2529842.
+                    </li>
+                    <li id="ref5" class="pl-6 -indent-6">
+                        5. Taylor EA, Khodyakov D, Buttorff C, et al. Part D Senior Savings Model Final Evaluation, 2021 to 2023. RAND Health Care; 2025. Prepared for CMS.
+                    </li>
+                    <li id="ref6" class="pl-6 -indent-6">
+                        6. Cubanski J, Neuman T, Freed M. Explaining the Prescription Drug Provisions in the Inflation Reduction Act. Kaiser Family Foundation; 2022.
+                    </li>
+                    <li id="ref7" class="pl-6 -indent-6">
+                        7. Luo J, Lauffenburger JC, Lai Y, et al. Association of formulary restrictions and initiation of an SGLT2i or GLP1-RA among Medicare beneficiaries with type 2 diabetes. <em>J Diabetes Complications</em>. 2024;38(1):108649.
+                    </li>
+                    <li id="ref8" class="pl-6 -indent-6">
+                        8. Shen X, Stuart BC, Pak C, et al. Impact of formulary restrictions on medication use and costs among low-income subsidy recipients in Medicare Part D. <em>Am J Manag Care</em>. 2017;23(8):e265-e274.
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h4 class="font-semibold mb-3">About This Project</h4>
+                    <p class="text-gray-400 text-sm">
+                        MPH Capstone Project at the University of Pennsylvania, Health Policy and Health Care Innovation track.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-3">Contact</h4>
+                    <p class="text-gray-400 text-sm">
+                        Naomi Sahle<br>
+                        University of Pennsylvania<br>
+                        Perelman School of Medicine
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-3">Acknowledgments</h4>
+                    <p class="text-gray-400 text-sm">
+                        Mentor: Dr. Anne Shofer<br>
+                        Instructor: Prof. Dominique Ruggieri
+                    </p>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-500 text-sm">
+                <p>© 2025 Naomi Sahle. Demo version with synthetic data.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Charts -->
+    <script>
+        // Scroll to reference
+        function scrollToRef(num) {
+            document.getElementById('ref' + num).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Temporal trends data
+        const temporalData = {
+            labels: ['2020', '2021', '2022', '2023', '2024', '2025'],
+            datasets: [
+                {
+                    label: 'GLP-1 Receptor Agonists',
+                    data: [5.3, 8.4, 11.2, 10.7, 77.7, 94.6],
+                    borderColor: '#e41a1c',
+                    backgroundColor: 'rgba(228, 26, 28, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    pointRadius: 5
+                },
+                {
+                    label: 'Insulin',
+                    data: [17.8, 14.8, 17.3, 8.6, 5.2, 3.9],
+                    borderColor: '#377eb8',
+                    backgroundColor: 'rgba(55, 126, 184, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 4
+                },
+                {
+                    label: 'SGLT2 Inhibitors',
+                    data: [29.2, 38.8, 40.4, 51.8, 63.0, 71.6],
+                    borderColor: '#4daf4a',
+                    backgroundColor: 'rgba(77, 175, 74, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 4
+                },
+                {
+                    label: 'DPP-4 Inhibitors',
+                    data: [33.7, 32.4, 44.4, 51.7, 55.6, 71.2],
+                    borderColor: '#984ea3',
+                    backgroundColor: 'rgba(152, 78, 163, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 4
+                }
+            ]
+        };
+
+        // Create temporal chart
+        new Chart(document.getElementById('temporalChart'), {
+            type: 'line',
+            data: temporalData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: '% Plans Requiring Prior Authorization'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Year'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Drug class comparison chart
+        new Chart(document.getElementById('classChart'), {
+            type: 'bar',
+            data: {
+                labels: ['GLP-1 Receptor Agonists', 'SGLT2 Inhibitors', 'DPP-4 Inhibitors', 'Insulin'],
+                datasets: [{
+                    label: 'Restrictiveness Score (2025)',
+                    data: [2.71, 2.12, 2.05, 1.23],
+                    backgroundColor: ['#e41a1c', '#4daf4a', '#984ea3', '#377eb8'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 4,
+                        title: {
+                            display: true,
+                            text: 'Restrictiveness Score (0-4)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Geographic table data
+        const geoData = [
+            { county: 'Broward', state: 'FL', score: 2.73, pa: 97.2, plans: 40 },
+            { county: 'Delaware', state: 'PA', score: 2.72, pa: 97.5, plans: 46 },
+            { county: 'Dallas', state: 'TX', score: 2.71, pa: 94.9, plans: 46 },
+            { county: 'Los Angeles', state: 'CA', score: 2.69, pa: 95.5, plans: 45 },
+            { county: 'Manhattan', state: 'NY', score: 2.69, pa: 94.3, plans: 46 },
+            { county: 'Allegheny', state: 'PA', score: 2.67, pa: 94.0, plans: 43 },
+            { county: 'Palm Beach', state: 'FL', score: 2.66, pa: 97.0, plans: 41 },
+            { county: 'Brooklyn', state: 'NY', score: 2.65, pa: 95.3, plans: 43 },
+            { county: 'Philadelphia', state: 'PA', score: 2.57, pa: 90.2, plans: 44 },
+            { county: 'Miami-Dade', state: 'FL', score: 2.53, pa: 95.6, plans: 42 },
+        ];
+
+        const tableBody = document.getElementById('geoTable');
+        geoData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b hover:bg-gray-50';
+            tr.innerHTML = `
+                <td class="p-3">${row.county}</td>
+                <td class="p-3">${row.state}</td>
+                <td class="p-3 text-right font-medium">${row.score.toFixed(2)}</td>
+                <td class="p-3 text-right">${row.pa.toFixed(1)}%</td>
+                <td class="p-3 text-right">${row.plans}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    </script>
+
+</body>
+</html>
