@@ -139,6 +139,57 @@
     footer{background:var(--navy);color:rgba(255,255,255,0.65);text-align:center;padding:2rem;font-size:0.82rem;line-height:1.8;}
     footer strong{color:white;}
     .divider{height:1px;background:var(--gray-mid);}
+  
+    /* ── SLIDE-IN DETAIL PANEL ── */
+    .detail-panel{
+      position:absolute;top:0;right:-380px;bottom:0;width:360px;
+      background:white;box-shadow:-4px 0 24px rgba(0,0,0,0.18);
+      transition:right 0.35s cubic-bezier(0.4,0,0.2,1);
+      z-index:50;display:flex;flex-direction:column;overflow:hidden;
+      pointer-events:none;
+    }
+    .detail-panel.open{right:0;pointer-events:all;}
+    .dp-header{background:var(--navy);color:white;padding:1rem 1.25rem 0.9rem;position:relative;flex-shrink:0;}
+    .dp-close{position:absolute;top:0.75rem;right:0.85rem;background:rgba(255,255,255,0.15);
+      border:none;color:white;width:26px;height:26px;border-radius:50%;cursor:pointer;
+      font-size:1rem;line-height:1;display:flex;align-items:center;justify-content:center;}
+    .dp-close:hover{background:rgba(255,255,255,0.28);}
+    .dp-county{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;padding-right:2rem;}
+    .dp-state{font-size:0.75rem;color:rgba(255,255,255,0.6);margin-top:2px;}
+    .dp-body{padding:1.1rem 1.25rem;overflow-y:auto;flex:1;}
+    .dp-headline{display:flex;align-items:baseline;gap:0.5rem;margin-bottom:0.2rem;}
+    .dp-big{font-family:'Playfair Display',serif;font-size:2rem;color:var(--navy);}
+    .dp-big-lbl{font-size:0.8rem;color:var(--text-light);}
+    .dp-section-title{font-size:0.68rem;font-weight:700;letter-spacing:0.1em;
+      text-transform:uppercase;color:var(--gold);margin:0.9rem 0 0.55rem;}
+    .dp-compare-row{display:flex;align-items:center;gap:0.55rem;margin:0.4rem 0;}
+    .dp-compare-lbl{font-size:0.73rem;width:88px;color:var(--text-light);flex-shrink:0;}
+    .dp-bar-wrap{flex:1;height:7px;background:var(--gray-light);border-radius:3px;overflow:hidden;}
+    .dp-bar{height:100%;border-radius:3px;transition:width 0.6s ease;}
+    .dp-compare-val{font-size:0.73rem;font-weight:700;width:40px;text-align:right;flex-shrink:0;}
+    .dp-compare-row.county .dp-bar{background:var(--navy);}
+    .dp-compare-row.county .dp-compare-val{color:var(--navy);}
+    .dp-compare-row.state .dp-bar{background:var(--gold);}
+    .dp-compare-row.state .dp-compare-val{color:var(--gold);}
+    .dp-compare-row.national .dp-bar{background:var(--gray-mid);}
+    .dp-compare-row.national .dp-compare-val{color:var(--gray-dark);}
+    .dp-drug-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.45rem;margin-bottom:0.25rem;}
+    .dp-drug-card{background:var(--gray-light);border:1px solid var(--gray-mid);border-radius:5px;padding:0.4rem 0.6rem;}
+    .dp-drug-card.hl{background:var(--navy);border-color:var(--navy);}
+    .dp-dc-lbl{font-size:0.63rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--gray-dark);}
+    .dp-drug-card.hl .dp-dc-lbl{color:rgba(255,255,255,0.6);}
+    .dp-dc-val{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--navy);}
+    .dp-drug-card.hl .dp-dc-val{color:white;}
+    .dp-dc-sub{font-size:0.62rem;color:var(--text-light);}
+    .dp-drug-card.hl .dp-dc-sub{color:rgba(255,255,255,0.5);}
+    .dp-divider{height:1px;background:var(--gray-mid);margin:0.75rem 0;}
+    .dp-trend-bars{display:flex;align-items:flex-end;gap:3px;height:40px;}
+    .dp-trend-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;background:var(--navy);opacity:0.15;}
+    .dp-trend-bar.filled{opacity:1;}
+    .dp-trend-cols{display:flex;gap:3px;margin-top:2px;}
+    .dp-trend-col{flex:1;text-align:center;font-size:0.6rem;color:var(--gray-dark);}
+    .dp-trend-ends{display:flex;justify-content:space-between;font-size:0.68rem;color:var(--text-light);margin-top:3px;}
+    .dp-no-data{font-size:0.8rem;color:var(--text-light);font-style:italic;margin-top:0.5rem;}
   </style>
 </head>
 <body>
@@ -232,7 +283,7 @@
       </div>
 
       <button class="btn-reset" onclick="resetZoom()">↺ Reset</button>
-      <button class="btn-export" onclick="exportMap()">⬇ Export SVG</button>
+      <button class="btn-export" onclick="exportMap()">⬇ Export PNG</button>
     </div>
 
     <!-- DIFF BANNER -->
@@ -297,7 +348,89 @@
       </div>
 
       <!-- MAP CANVAS -->
-      <div class="map-canvas">
+      <div class="map-canvas" style="position:relative;overflow:hidden;">
+
+        <!-- SLIDE-IN DETAIL PANEL -->
+        <div class="detail-panel" id="detail-panel">
+          <div class="dp-header">
+            <button class="dp-close" onclick="closeDetailPanel()">×</button>
+            <div class="dp-county" id="dp-county">—</div>
+            <div class="dp-state" id="dp-state">—</div>
+          </div>
+          <div class="dp-body">
+            <div class="dp-headline">
+              <span class="dp-big" id="dp-big">—</span>
+              <span class="dp-big-lbl" id="dp-big-lbl">GLP-1 PA Rate · 2024</span>
+            </div>
+
+            <div class="dp-section-title">County vs State vs National</div>
+            <div class="dp-compare-row county">
+              <div class="dp-compare-lbl" id="dp-lbl-county">This county</div>
+              <div class="dp-bar-wrap"><div class="dp-bar" id="dp-bar-county" style="width:0%"></div></div>
+              <div class="dp-compare-val" id="dp-val-county">—</div>
+            </div>
+            <div class="dp-compare-row state">
+              <div class="dp-compare-lbl" id="dp-lbl-state">State avg</div>
+              <div class="dp-bar-wrap"><div class="dp-bar" id="dp-bar-state" style="width:0%"></div></div>
+              <div class="dp-compare-val" id="dp-val-state">—</div>
+            </div>
+            <div class="dp-compare-row national">
+              <div class="dp-compare-lbl">National avg</div>
+              <div class="dp-bar-wrap"><div class="dp-bar" id="dp-bar-national" style="width:0%"></div></div>
+              <div class="dp-compare-val" id="dp-val-national">—</div>
+            </div>
+
+            <div class="dp-divider"></div>
+
+            <div class="dp-section-title">All Drug Classes · <span id="dp-year-lbl">2024</span></div>
+            <div class="dp-drug-grid" id="dp-drug-grid">
+              <div class="dp-drug-card hl" id="dp-card-GLP1">
+                <div class="dp-dc-lbl">GLP-1</div>
+                <div class="dp-dc-val" id="dp-v-GLP1">—</div>
+                <div class="dp-dc-sub" id="dp-s-GLP1">PA Rate</div>
+              </div>
+              <div class="dp-drug-card" id="dp-card-Insulin">
+                <div class="dp-dc-lbl">Insulin</div>
+                <div class="dp-dc-val" id="dp-v-Insulin">—</div>
+                <div class="dp-dc-sub" id="dp-s-Insulin">PA Rate</div>
+              </div>
+              <div class="dp-drug-card" id="dp-card-SGLT2">
+                <div class="dp-dc-lbl">SGLT-2</div>
+                <div class="dp-dc-val" id="dp-v-SGLT2">—</div>
+                <div class="dp-dc-sub" id="dp-s-SGLT2">PA Rate</div>
+              </div>
+              <div class="dp-drug-card" id="dp-card-DPP4">
+                <div class="dp-dc-lbl">DPP-4</div>
+                <div class="dp-dc-val" id="dp-v-DPP4">—</div>
+                <div class="dp-dc-sub" id="dp-s-DPP4">PA Rate</div>
+              </div>
+            </div>
+
+            <div class="dp-divider"></div>
+
+            <div class="dp-section-title">GLP-1 PA Rate — 2020 to 2025</div>
+            <div class="dp-trend-bars" id="dp-trend-bars">
+              <div class="dp-trend-bar" id="dp-tb-2020"></div>
+              <div class="dp-trend-bar" id="dp-tb-2021"></div>
+              <div class="dp-trend-bar" id="dp-tb-2022"></div>
+              <div class="dp-trend-bar" id="dp-tb-2023"></div>
+              <div class="dp-trend-bar" id="dp-tb-2024"></div>
+              <div class="dp-trend-bar" id="dp-tb-2025"></div>
+            </div>
+            <div class="dp-trend-cols">
+              <div class="dp-trend-col">2020</div>
+              <div class="dp-trend-col">2021</div>
+              <div class="dp-trend-col">2022</div>
+              <div class="dp-trend-col">2023</div>
+              <div class="dp-trend-col">2024</div>
+              <div class="dp-trend-col">2025</div>
+            </div>
+            <div class="dp-trend-ends">
+              <span id="dp-trend-start">—</span>
+              <span id="dp-trend-end">—</span>
+            </div>
+          </div>
+        </div>
         <!-- Single / diff map -->
         <div id="single-wrap">
           <svg id="us-map"></svg>
@@ -499,7 +632,13 @@ async function drawMap(svgId, year, drug, metric, isDiff, baseYear){
         const sa=FIPS_TO_STATE[fips.substring(0,2)];
         showCountyTip(e,fips,sa,year,drug,metric,isDiff,baseYear);
       })
-      .on('mouseleave',hideTip);
+      .on('mouseleave',hideTip)
+      .on('click',(e,d)=>{
+        if(svgId!=='us-map') return;
+        const fips=d.id.toString().padStart(5,'0');
+        const sa=FIPS_TO_STATE[fips.substring(0,2)];
+        openDetailPanel(fips, sa, mapState.year, mapState.drug, mapState.metric);
+      });
     g.append('path').datum(sMesh).attr('class','state-border').attr('d',path);
   } else {
     g.selectAll('.state-fill')
@@ -519,6 +658,7 @@ async function drawMap(svgId, year, drug, metric, isDiff, baseYear){
       .on('click',(e,d)=>{
         const abbr=FIPS_TO_STATE[d.id.toString().padStart(2,'0')];
         clickState(svgId,d,abbr);
+        if(svgId==='us-map') openDetailPanel(null, abbr, mapState.year, mapState.drug, mapState.metric);
       });
     g.append('path').datum(sMesh).attr('class','state-border').attr('d',path);
   }
@@ -774,12 +914,147 @@ async function jumpTo(abbr){
 
 // ── EXPORT ───────────────────────────────────────────────────────────────────
 function exportMap(){
-  const svg=document.getElementById('us-map');
-  const blob=new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`map_${mapState.drug}_${mapState.metric}_${mapState.year}.svg`;
-  a.click();
+  const svgEl = document.getElementById('us-map');
+  const w = svgEl.getBoundingClientRect().width || 900;
+  const h = 500;
+  // Serialize SVG with inline styles
+  const svgData = new XMLSerializer().serializeToString(svgEl);
+  const svgBlob = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = w * 2;   // 2x for retina quality
+    canvas.height = h * 2;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+    ctx.fillStyle = '#e8edf2';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    const a = document.createElement('a');
+    a.download = `map_${mapState.drug}_${mapState.metric}_${mapState.year}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  };
+  img.src = url;
+}
+
+
+// ── DETAIL PANEL ─────────────────────────────────────────────────────────────
+let detailFips = null;
+let detailAbbr = null;
+
+function openDetailPanel(fips, abbr, year, drug, metric){
+  detailFips = fips;
+  detailAbbr = abbr;
+  refreshDetailPanel(year, drug, metric);
+  document.getElementById('detail-panel').classList.add('open');
+}
+
+function closeDetailPanel(){
+  document.getElementById('detail-panel').classList.remove('open');
+  detailFips = null; detailAbbr = null;
+}
+
+function refreshDetailPanel(year, drug, metric){
+  if(!detailFips && !detailAbbr) return;
+  const isPa = metric === 'pa';
+  const fmt = v => v == null ? '—' : isPa ? (v*100).toFixed(1)+'%' : v.toFixed(2);
+  const DRUGS = ['GLP1','Insulin','SGLT2','DPP4'];
+  const DRUG_LABELS = {GLP1:'GLP-1 RA',Insulin:'Insulin',SGLT2:'SGLT-2',DPP4:'DPP-4'};
+  const metricLabel = isPa ? 'PA Rate' : 'Restrict. Score';
+
+  // Get values — prefer county if available
+  let countyVals = null, stateAbbr = detailAbbr;
+  if(detailFips){
+    const cd = (countyCache[year]||{})[detailFips];
+    if(cd){
+      countyVals = {};
+      DRUGS.forEach(d => countyVals[d] = cd[(isPa?'pa_':'sc_')+d] ?? null);
+      stateAbbr = cd.state || detailAbbr;
+    }
+  }
+
+  // State values
+  const stateData = STATE_ALL[year.toString()]?.[stateAbbr] || {};
+  const stateVals = {};
+  DRUGS.forEach(d => stateVals[d] = stateData[(isPa?'pa_':'sc_')+d] ?? null);
+
+  // National average
+  const allStates = Object.values(STATE_ALL[year.toString()]||{});
+  const natAvg = allStates.length ?
+    allStates.reduce((s,s2) => s + (s2[(isPa?'pa_':'sc_')+drug] ?? 0), 0) / allStates.length : null;
+
+  const countyV = countyVals ? countyVals[drug] : (stateVals[drug]);
+  const stateV = stateVals[drug];
+  const maxV = isPa ? 1 : 4;
+
+  // Header
+  const countyName = detailFips ? 'County FIPS '+detailFips : (STATE_NAMES[stateAbbr]||stateAbbr);
+  document.getElementById('dp-county').textContent = countyName;
+  document.getElementById('dp-state').textContent =
+    (STATE_NAMES[stateAbbr]||stateAbbr) + (detailFips ? ' · FIPS '+detailFips : '');
+  document.getElementById('dp-big').textContent = fmt(countyV);
+  document.getElementById('dp-big-lbl').textContent = DRUG_LABELS[drug]+' '+metricLabel+' · '+year;
+  document.getElementById('dp-year-lbl').textContent = year;
+
+  // Comparison bars
+  const setBar = (id, valId, barId, v) => {
+    document.getElementById(valId).textContent = fmt(v);
+    document.getElementById(barId).style.width = v != null ? Math.min(100,(v/maxV)*100)+'%' : '0%';
+  };
+  setBar('county', 'dp-val-county', 'dp-bar-county', countyV);
+  document.getElementById('dp-lbl-county').textContent = detailFips ? 'This county' : (STATE_NAMES[stateAbbr]||stateAbbr);
+  setBar('state', 'dp-val-state', 'dp-bar-state', stateV);
+  document.getElementById('dp-lbl-state').textContent = (stateAbbr||'State')+' avg';
+  setBar('national', 'dp-val-national', 'dp-bar-national', natAvg);
+
+  // Drug cards
+  DRUGS.forEach(d => {
+    const v = countyVals ? countyVals[d] : stateVals[d];
+    const card = document.getElementById('dp-card-'+d);
+    card.className = 'dp-drug-card' + (d === drug ? ' hl' : '');
+    document.getElementById('dp-v-'+d).textContent = fmt(v);
+    document.getElementById('dp-s-'+d).textContent = metricLabel;
+  });
+
+  // GLP-1 trend bars (use county data if available for each year, else state)
+  const trendVals = {};
+  COUNTY_YEARS.forEach(yr => {
+    let v = null;
+    if(detailFips){
+      const cd = (countyCache[yr]||{})[detailFips];
+      if(cd) v = isPa ? (cd.pa_GLP1??null) : (cd.sc_GLP1??null);
+    }
+    if(v === null){
+      const sd = STATE_ALL[yr.toString()]?.[stateAbbr];
+      if(sd) v = isPa ? (sd.pa_GLP1??null) : (sd.sc_GLP1??null);
+    }
+    trendVals[yr] = v;
+  });
+  const trendMax = Math.max(...Object.values(trendVals).filter(v=>v!=null), 0.01);
+  COUNTY_YEARS.forEach(yr => {
+    const bar = document.getElementById('dp-tb-'+yr);
+    const v = trendVals[yr];
+    if(v != null){
+      bar.classList.add('filled');
+      bar.style.height = Math.max(4, (v/trendMax)*100)+'%';
+      // Color gradient by intensity
+      const intensity = v/maxV;
+      const r = Math.round(12 + (200-12)*(1-intensity));
+      const g = Math.round(35 + (220-35)*(1-intensity));
+      const b = Math.round(64 + (240-64)*(1-intensity));
+      bar.style.background = `rgb(${r},${g},${b})`;
+    } else {
+      bar.classList.remove('filled');
+      bar.style.height = '3px';
+      bar.style.background = 'var(--gray-mid)';
+    }
+  });
+  const startV = trendVals[2020], endV = trendVals[2025];
+  document.getElementById('dp-trend-start').textContent = startV!=null ? fmt(startV)+' (2020)' : '—';
+  document.getElementById('dp-trend-end').textContent = endV!=null ? fmt(endV)+' (2025)' : '—';
 }
 
 // ── MAIN UPDATE ──────────────────────────────────────────────────────────────
@@ -806,6 +1081,11 @@ async function updateMap(){
       try{ countyCache[yr]=await d3.json(`data/county_${yr}.json`); }
       catch(e){ console.warn('No county data for',yr); }
     }
+  }
+
+  // Refresh detail panel if open
+  if(document.getElementById('detail-panel').classList.contains('open')){
+    setTimeout(()=>refreshDetailPanel(mapState.year, mapState.drug, mapState.metric), 100);
   }
 
   if(mapMode==='single'){
