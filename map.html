@@ -125,10 +125,15 @@
 
     /* SVG elements */
     .county{stroke:rgba(255,255,255,0.12);stroke-width:0.3px;}
+    /* PR inset */
+    .pr-inset{cursor:pointer;}
+    .pr-inset:hover{opacity:0.82;stroke:var(--gold);stroke-width:1.5px;}
+    .pr-label{font-family:'Source Sans 3',sans-serif;font-size:9px;fill:var(--text-light);text-anchor:middle;}
+    .pr-box{fill:none;stroke:var(--gray-mid);stroke-width:1px;}
     .highlight-ring{fill:none;stroke:var(--gold);stroke-width:2.5px;pointer-events:none;
       filter:drop-shadow(0 0 4px rgba(200,135,58,0.7));
       animation:highlight-pulse 1.8s ease-in-out infinite;}
-    @keyframes highlight-pulse{0%,100%{stroke-width:2.5px;opacity:1}50%{stroke-width:4px;opacity:0.75}}
+    @keyframes highlight-pulse{0%,100%{stroke-width:1.5px;opacity:1}50%{stroke-width:2px;opacity:0.75}}
     .state-border{fill:none;stroke:white;stroke-width:0.9px;pointer-events:none;}
     .state-fill{cursor:pointer;}
     .state-fill:hover{opacity:0.82;stroke:var(--gold);stroke-width:1.8px;}
@@ -350,7 +355,7 @@
           </div>
           <div id="zoom-note"></div>
           <div style="margin-top:0.75rem;font-size:0.68rem;color:var(--gray-dark);line-height:1.5;border-top:1px solid var(--gray-mid);padding-top:0.6rem;">
-            <strong>Note:</strong> Alaska appears gray — CMS does not report Part D formulary data at the county level for AK. Puerto Rico is shown in the lower-right inset.
+            <strong>Note:</strong> Alaska is excluded — CMS does not report Part D county-level data for AK. Puerto Rico is shown as a separate inset (lower right).
           </div>
         </div>
       </div>
@@ -534,6 +539,8 @@ let zoomA = null;
 let zoomB = null;
 let countyIndex = []; // [{name, fips, stateAbbr, feature}] built after atlas loads
 let highlightedFeature = null; // currently highlighted feature for the gold ring
+let prAtlas = null;   // PR municipalities TopoJSON
+let prPath = null;    // path generator for PR inset projection
 
 let mapState = {year:2024, drug:'GLP1', metric:'pa'};
 
@@ -618,6 +625,12 @@ async function drawMap(svgId, year, drug, metric, isDiff, baseYear){
   }
 
   if(!usAtlas) usAtlas = await d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json');
+  // Load PR municipalities TopoJSON (separate from us-atlas which doesn't include PR)
+  if(!prAtlas){
+    try{
+      prAtlas = await d3.json('https://cdn.jsdelivr.net/gh/deldersveld/topojson@master/countries/puerto-rico/puerto-rico-municipalities.json');
+    } catch(e){ console.warn('Could not load PR atlas:', e); }
+  }
   // Build county search index once
   if(countyIndex.length === 0){
     const allCounties = topojson.feature(usAtlas, usAtlas.objects.counties);
@@ -689,7 +702,11 @@ async function drawMap(svgId, year, drug, metric, isDiff, baseYear){
     g.append('path').datum(sMesh).attr('class','state-border').attr('d',path);
   }
 
-  if(svgId==='us-map'){ updateHistogram(year,drug,metric,isDiff,baseYear); updateStats(year,drug,metric); }
+  if(svgId==='us-map'){
+    updateHistogram(year,drug,metric,isDiff,baseYear);
+    updateStats(year,drug,metric);
+    drawPRInset(document.getElementById(svgId), year, drug, metric, isDiff, baseYear);
+  }
   // Restore highlight ring if one was set (SVG was cleared)
   if(svgId==='us-map' && highlightedFeature){
     setTimeout(()=>drawHighlight(highlightedFeature), 50);
@@ -995,6 +1012,91 @@ async function jumpToCounty(fips){
   document.getElementById('zoom-note').innerHTML=`<em>Zoomed to ${entry.name} County, ${entry.stateAbbr} — ↺ Reset</em>`;
   // Highlight the county after transition settles
   setTimeout(()=>drawHighlight(entry.feature), 750);
+}
+
+// ── PUERTO RICO INSET ───────────────────────────────────────────────────────
+function drawPRInset(svgEl, year, drug, metric, isDiff, baseYear){
+  if(!prAtlas) return;
+  const svg = d3.select(svgEl);
+  svg.select('.pr-inset-group').remove();
+
+  const W = svgEl.getBoundingClientRect().width || 860;
+  const H = 500;
+
+  // Inset box dimensions and position (bottom-right, next to HI)
+  const bw = 112, bh = 68;
+  const bx = W * 0.79 - 5;  // align near HI inset
+  const by = H - bh - 8;
+
+  // Puerto Rico projection — centered on PR, fitted to inset box
+  const prProj = d3.geoMercator()
+    .center([-66.4, 18.22])
+    .scale(1600)
+    .translate([bx + bw/2, by + bh/2]);
+  prPath = d3.geoPath().projection(prProj);
+
+  const g = svg.append('g').attr('class','pr-inset-group');
+
+  // Background box
+  g.append('rect')
+    .attr('class','pr-box')
+    .attr('x', bx).attr('y', by)
+    .attr('width', bw).attr('height', bh)
+    .attr('rx', 2);
+
+  // Draw PR municipalities
+  const munis = topojson.feature(prAtlas, prAtlas.objects['municipalities'] ||
+    prAtlas.objects[Object.keys(prAtlas.objects)[0]]);
+
+  const useCounty = resolution === 'county' && countyCache[year];
+
+  g.selectAll('.pr-inset')
+    .data(munis.features).join('path')
+    .attr('class','pr-inset')
+    .attr('d', prPath)
+    .attr('fill', d => {
+      // PR FIPS: 72 + 3-digit muni code
+      // deldersveld uses FIPS numeric id or properties.FIPS
+      const rawId = d.id || d.properties?.FIPS || d.properties?.fips || '';
+      const fips = rawId.toString().padStart(5,'0');
+      if(useCounty){
+        let v = countyVal(fips, year, drug, metric);
+        if(isDiff){ const v0=countyVal(fips,baseYear,drug,metric); v=(v!=null&&v0!=null)?v-v0:null; }
+        if(v != null) return getColor(v, isDiff);
+      }
+      // Fall back to state average for PR
+      let v = stateVal('PR', year, drug, metric);
+      if(isDiff){ const v0=stateVal('PR',baseYear,drug,metric); v=(v!=null&&v0!=null)?v-v0:null; }
+      return getColor(v, isDiff);
+    })
+    .attr('stroke','rgba(255,255,255,0.3)')
+    .attr('stroke-width','0.4px')
+    .on('mousemove',(e,d)=>{
+      const rawId = d.id || d.properties?.FIPS || d.properties?.fips || '';
+      const fips = rawId.toString().padStart(5,'0');
+      const cn = d.properties?.NAME || d.properties?.name || null;
+      showCountyTip(e, fips, 'PR', cn, year, drug, metric, isDiff, baseYear);
+    })
+    .on('mouseleave', hideTip)
+    .on('click',(e,d)=>{
+      const rawId = d.id || d.properties?.FIPS || d.properties?.fips || '';
+      const fips = rawId.toString().padStart(5,'0');
+      const cn = d.properties?.NAME || d.properties?.name || null;
+      openDetailPanel(fips, 'PR', cn, year, drug, metric);
+    });
+
+  // PR outline border
+  const prMesh = topojson.mesh(prAtlas, prAtlas.objects[Object.keys(prAtlas.objects)[0]]);
+  g.append('path').datum(prMesh)
+    .attr('d', prPath)
+    .attr('fill','none').attr('stroke','rgba(255,255,255,0.6)').attr('stroke-width','0.6px')
+    .attr('pointer-events','none');
+
+  // Label
+  g.append('text')
+    .attr('class','pr-label')
+    .attr('x', bx + bw/2).attr('y', by + bh + 11)
+    .text('Puerto Rico');
 }
 
 // ── HIGHLIGHT RING ──────────────────────────────────────────────────────────
