@@ -37,8 +37,9 @@
     .res-toggle button{font-family:'Source Sans 3',sans-serif;font-size:0.72rem;font-weight:600;padding:0.28rem 0.6rem;border:none;background:var(--gray-light);color:var(--gray-dark);cursor:pointer;transition:all 0.15s;}
     .res-toggle button.active{background:var(--navy);color:white;}
     .search-wrap{position:relative;}
-    #search-box{font-size:0.8rem;padding:0.3rem 0.6rem;border:1px solid var(--gray-mid);border-radius:4px;width:170px;font-family:'Source Sans 3',sans-serif;}
-    .search-results{position:absolute;top:100%;left:0;background:white;border:1px solid var(--gray-mid);border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:200;width:200px;max-height:180px;overflow-y:auto;display:none;}
+    #search-box{font-size:0.8rem;padding:0.3rem 0.6rem;border:1px solid var(--gray-mid);border-radius:4px;width:210px;font-family:'Source Sans 3',sans-serif;}
+    .search-results{position:absolute;top:100%;left:0;background:white;border:1px solid var(--gray-mid);border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:200;width:260px;max-height:260px;overflow-y:auto;display:none;}
+    .search-group-label{font-size:0.63rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);padding:0.35rem 0.75rem 0.2rem;background:var(--gray-light);border-bottom:1px solid var(--gray-mid);}
     .search-item{padding:0.35rem 0.75rem;cursor:pointer;font-size:0.8rem;border-bottom:1px solid var(--gray-light);}
     .search-item:hover{background:var(--gray-light);}
     .btn-export{font-family:'Source Sans 3',sans-serif;font-size:0.75rem;font-weight:600;padding:0.3rem 0.85rem;border-radius:4px;border:none;background:var(--gold);color:white;cursor:pointer;margin-left:auto;}
@@ -278,7 +279,7 @@
 
       <span class="toolbar-label">Find</span>
       <div class="search-wrap">
-        <input type="text" id="search-box" placeholder="Search state..." oninput="handleSearch()" onblur="setTimeout(function(){hideSearch();},200)">
+        <input type="text" id="search-box" placeholder="Search county or state..." oninput="handleSearch()" onblur="setTimeout(function(){hideSearch();},200)">
         <div class="search-results" id="search-results"></div>
       </div>
 
@@ -524,6 +525,7 @@ let countyCache = {};        // year -> {fips: data}
 let mainZoom = null;
 let zoomA = null;
 let zoomB = null;
+let countyIndex = []; // [{name, fips, stateAbbr, feature}] built after atlas loads
 
 let mapState = {year:2024, drug:'GLP1', metric:'pa'};
 
@@ -608,6 +610,19 @@ async function drawMap(svgId, year, drug, metric, isDiff, baseYear){
   }
 
   if(!usAtlas) usAtlas = await d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json');
+  // Build county search index once
+  if(countyIndex.length === 0){
+    const allCounties = topojson.feature(usAtlas, usAtlas.objects.counties);
+    countyIndex = allCounties.features
+      .filter(f => f.properties && f.properties.name)
+      .map(f => ({
+        name: f.properties.name,
+        fips: f.id.toString().padStart(5,'0'),
+        stateAbbr: FIPS_TO_STATE[f.id.toString().padStart(5,'0').substring(0,2)] || '',
+        feature: f
+      }))
+      .sort((a,b) => a.name.localeCompare(b.name));
+  }
 
   const counties = topojson.feature(usAtlas, usAtlas.objects.counties);
   const states   = topojson.feature(usAtlas, usAtlas.objects.states);
@@ -630,14 +645,16 @@ async function drawMap(svgId, year, drug, metric, isDiff, baseYear){
       .on('mousemove',(e,d)=>{
         const fips=d.id.toString().padStart(5,'0');
         const sa=FIPS_TO_STATE[fips.substring(0,2)];
-        showCountyTip(e,fips,sa,year,drug,metric,isDiff,baseYear);
+        const cn=d.properties&&d.properties.name?d.properties.name:null;
+        showCountyTip(e,fips,sa,cn,year,drug,metric,isDiff,baseYear);
       })
       .on('mouseleave',hideTip)
       .on('click',(e,d)=>{
         if(svgId!=='us-map') return;
         const fips=d.id.toString().padStart(5,'0');
         const sa=FIPS_TO_STATE[fips.substring(0,2)];
-        openDetailPanel(fips, sa, mapState.year, mapState.drug, mapState.metric);
+        const cn=d.properties&&d.properties.name?d.properties.name:null;
+        openDetailPanel(fips, sa, cn, mapState.year, mapState.drug, mapState.metric);
       });
     g.append('path').datum(sMesh).attr('class','state-border').attr('d',path);
   } else {
@@ -658,7 +675,7 @@ async function drawMap(svgId, year, drug, metric, isDiff, baseYear){
       .on('click',(e,d)=>{
         const abbr=FIPS_TO_STATE[d.id.toString().padStart(2,'0')];
         clickState(svgId,d,abbr);
-        if(svgId==='us-map') openDetailPanel(null, abbr, mapState.year, mapState.drug, mapState.metric);
+        if(svgId==='us-map') openDetailPanel(null, abbr, null, mapState.year, mapState.drug, mapState.metric);
       });
     g.append('path').datum(sMesh).attr('class','state-border').attr('d',path);
   }
@@ -720,7 +737,7 @@ function showStateTip(e, abbr, year, drug, metric, isDiff, baseYear){
   posTip(e);
 }
 
-function showCountyTip(e, fips, stateAbbr, year, drug, metric, isDiff, baseYear){
+function showCountyTip(e, fips, stateAbbr, countyName, year, drug, metric, isDiff, baseYear){
   const isPa=metric==='pa';
   const vals=allDrugsCounty(fips,year);
   const rows=vals?Object.entries(vals).map(([d,v])=>
@@ -733,7 +750,8 @@ function showCountyTip(e, fips, stateAbbr, year, drug, metric, isDiff, baseYear)
     diffRow=`<div class="tip-row"><span class="tip-drug">Δ from 2020</span><span class="tip-val hl">${dv==null?'—':(dv>=0?'+':'')+fmt(dv,isPa)}</span></div>`;
   }
   const sn=STATE_NAMES[stateAbbr]||stateAbbr||'';
-  tip.innerHTML=`<div class="tip-title">County FIPS ${fips} · ${sn} · ${year}</div>${rows}${diffRow}`;
+  const displayName = countyName ? `${countyName}, ${stateAbbr||sn}` : `FIPS ${fips}`;
+  tip.innerHTML=`<div class="tip-title">${displayName} · ${year}</div>${rows}${diffRow}`;
   posTip(e);
 }
 
@@ -883,9 +901,29 @@ function handleSearch(){
   const q=document.getElementById('search-box').value.toLowerCase().trim();
   const res=document.getElementById('search-results');
   if(!q||q.length<2){res.style.display='none';return;}
-  const matches=Object.entries(STATE_NAMES).filter(([a,n])=>n.toLowerCase().includes(q)||a.toLowerCase()===q).slice(0,7);
-  if(!matches.length){res.style.display='none';return;}
-  res.innerHTML=matches.map(([a,n])=>`<div class="search-item" onmousedown="jumpTo('${a}')">${n} (${a})</div>`).join('');
+
+  // State matches
+  const stateMatches=Object.entries(STATE_NAMES)
+    .filter(([a,n])=>n.toLowerCase().includes(q)||a.toLowerCase()===q)
+    .slice(0,4);
+
+  // County matches (only if atlas loaded)
+  const countyMatches = countyIndex
+    .filter(c => c.name.toLowerCase().includes(q) || (c.stateAbbr&&c.stateAbbr.toLowerCase()===q))
+    .slice(0,8);
+
+  if(!stateMatches.length && !countyMatches.length){res.style.display='none';return;}
+
+  let html='';
+  if(stateMatches.length){
+    html+=`<div class="search-group-label">States</div>`;
+    html+=stateMatches.map(([a,n])=>`<div class="search-item" onmousedown="jumpTo('${a}')">${n} (${a})</div>`).join('');
+  }
+  if(countyMatches.length){
+    html+=`<div class="search-group-label">Counties</div>`;
+    html+=countyMatches.map(c=>`<div class="search-item" onmousedown="jumpToCounty('${c.fips}')">${c.name} County, ${c.stateAbbr}</div>`).join('');
+  }
+  res.innerHTML=html;
   res.style.display='block';
 }
 function hideSearch(){ document.getElementById('search-results').style.display='none'; }
@@ -910,6 +948,33 @@ async function jumpTo(abbr){
   } else {
     clickState('us-map',feat,abbr);
   }
+}
+
+async function jumpToCounty(fips){
+  const entry = countyIndex.find(c => c.fips === fips);
+  if(!entry) return;
+  document.getElementById('search-box').value = entry.name+' County, '+entry.stateAbbr;
+  hideSearch();
+
+  // Load county data if needed
+  const yr = mapState.year;
+  if(resolution==='county' && COUNTY_YEARS.includes(yr) && !countyCache[yr]){
+    try{ countyCache[yr] = await d3.json(`data/county_${yr}.json`); }
+    catch(e){ console.warn('No county data for', yr); }
+  }
+
+  // Zoom map to county
+  const svgEl = document.getElementById('us-map');
+  const w = svgEl.getBoundingClientRect().width || 860, h = 500;
+  const [[x0,y0],[x1,y1]] = path.bounds(entry.feature);
+  const sc = Math.min(12, 0.75/Math.max((x1-x0)/w, (y1-y0)/h));
+  const tx = w/2-sc*(x0+x1)/2, ty = h/2-sc*(y0+y1)/2;
+  const t = d3.zoomIdentity.translate(tx,ty).scale(sc);
+  d3.select('#us-map').transition().duration(700).call(mainZoom.transform, t);
+
+  // Open detail panel
+  openDetailPanel(fips, entry.stateAbbr, entry.name, mapState.year, mapState.drug, mapState.metric);
+  document.getElementById('zoom-note').innerHTML=`<em>Zoomed to ${entry.name} County, ${entry.stateAbbr} — ↺ Reset</em>`;
 }
 
 // ── EXPORT ───────────────────────────────────────────────────────────────────
@@ -945,9 +1010,11 @@ function exportMap(){
 let detailFips = null;
 let detailAbbr = null;
 
-function openDetailPanel(fips, abbr, year, drug, metric){
+let detailCountyName = null;
+function openDetailPanel(fips, abbr, countyName, year, drug, metric){
   detailFips = fips;
   detailAbbr = abbr;
+  detailCountyName = countyName;
   refreshDetailPanel(year, drug, metric);
   document.getElementById('detail-panel').classList.add('open');
 }
@@ -991,10 +1058,14 @@ function refreshDetailPanel(year, drug, metric){
   const maxV = isPa ? 1 : 4;
 
   // Header
-  const countyName = detailFips ? 'County FIPS '+detailFips : (STATE_NAMES[stateAbbr]||stateAbbr);
-  document.getElementById('dp-county').textContent = countyName;
-  document.getElementById('dp-state').textContent =
-    (STATE_NAMES[stateAbbr]||stateAbbr) + (detailFips ? ' · FIPS '+detailFips : '');
+  const countyLabel = detailFips
+    ? (detailCountyName ? detailCountyName+' County' : 'FIPS '+detailFips)
+    : (STATE_NAMES[stateAbbr]||stateAbbr);
+  document.getElementById('dp-county').textContent = countyLabel;
+  const stateLabel = STATE_NAMES[stateAbbr]||stateAbbr||'';
+  document.getElementById('dp-state').textContent = detailFips
+    ? stateLabel + (detailCountyName ? '' : ' · FIPS '+detailFips)
+    : stateLabel;
   document.getElementById('dp-big').textContent = fmt(countyV);
   document.getElementById('dp-big-lbl').textContent = DRUG_LABELS[drug]+' '+metricLabel+' · '+year;
   document.getElementById('dp-year-lbl').textContent = year;
@@ -1005,7 +1076,9 @@ function refreshDetailPanel(year, drug, metric){
     document.getElementById(barId).style.width = v != null ? Math.min(100,(v/maxV)*100)+'%' : '0%';
   };
   setBar('county', 'dp-val-county', 'dp-bar-county', countyV);
-  document.getElementById('dp-lbl-county').textContent = detailFips ? 'This county' : (STATE_NAMES[stateAbbr]||stateAbbr);
+  document.getElementById('dp-lbl-county').textContent = detailFips
+    ? (detailCountyName||'This county')
+    : (STATE_NAMES[stateAbbr]||stateAbbr);
   setBar('state', 'dp-val-state', 'dp-bar-state', stateV);
   document.getElementById('dp-lbl-state').textContent = (stateAbbr||'State')+' avg';
   setBar('national', 'dp-val-national', 'dp-bar-national', natAvg);
