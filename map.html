@@ -470,12 +470,10 @@ function getCountyValue(fips) {
 }
 
 function getStateValue(abbr) {
-  if (mapState.drug === 'GLP1' && mapState.metric === 'pa') {
-    const d = STATE_ALL[mapState.year.toString()]?.[abbr];
-    return d ? (d[mapState.year.toString()] ?? null) : null;
-  }
-  // For non-GLP1 state fallback, use national average as proxy
-  return NATIONAL_TRENDS[mapState.year.toString()]?.[mapState.drug] ?? null;
+  const d = STATE_ALL[mapState.year.toString()]?.[abbr];
+  if (!d) return null;
+  const key = mapState.metric === 'pa' ? `pa_${mapState.drug}` : `sc_${mapState.drug}`;
+  return d[key] ?? null;
 }
 
 function isCountyYear() { return COUNTY_YEARS.includes(mapState.year); }
