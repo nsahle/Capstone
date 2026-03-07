@@ -125,6 +125,10 @@
 
     /* SVG elements */
     .county{stroke:rgba(255,255,255,0.12);stroke-width:0.3px;}
+    .highlight-ring{fill:none;stroke:var(--gold);stroke-width:2.5px;pointer-events:none;
+      filter:drop-shadow(0 0 4px rgba(200,135,58,0.7));
+      animation:highlight-pulse 1.8s ease-in-out infinite;}
+    @keyframes highlight-pulse{0%,100%{stroke-width:2.5px;opacity:1}50%{stroke-width:4px;opacity:0.75}}
     .state-border{fill:none;stroke:white;stroke-width:0.9px;pointer-events:none;}
     .state-fill{cursor:pointer;}
     .state-fill:hover{opacity:0.82;stroke:var(--gold);stroke-width:1.8px;}
@@ -526,6 +530,7 @@ let mainZoom = null;
 let zoomA = null;
 let zoomB = null;
 let countyIndex = []; // [{name, fips, stateAbbr, feature}] built after atlas loads
+let highlightedFeature = null; // currently highlighted feature for the gold ring
 
 let mapState = {year:2024, drug:'GLP1', metric:'pa'};
 
@@ -631,6 +636,7 @@ async function drawMap(svgId, year, drug, metric, isDiff, baseYear){
   const useCounty = resolution==='county' && COUNTY_YEARS.includes(parseInt(year)) && countyCache[year];
   const badge = document.getElementById('res-badge');
   if(badge){ badge.textContent = useCounty?'● County-level':'● State-level'; badge.style.background=useCounty?'var(--gold)':'var(--gray-dark)'; }
+  // Will re-draw highlight ring after render (see bottom of drawMap)
 
   if(useCounty){
     g.selectAll('.county')
@@ -681,6 +687,10 @@ async function drawMap(svgId, year, drug, metric, isDiff, baseYear){
   }
 
   if(svgId==='us-map'){ updateHistogram(year,drug,metric,isDiff,baseYear); updateStats(year,drug,metric); }
+  // Restore highlight ring if one was set (SVG was cleared)
+  if(svgId==='us-map' && highlightedFeature){
+    setTimeout(()=>drawHighlight(highlightedFeature), 50);
+  }
 }
 
 // ── STATE CLICK ZOOM ─────────────────────────────────────────────────────────
@@ -705,6 +715,7 @@ function clickState(svgId, feature, abbr){
 }
 function resetZoom(){
   zoomedState=null;
+  clearHighlight();
   d3.select('#us-map').transition().duration(400).call(mainZoom.transform,d3.zoomIdentity);
   document.getElementById('zoom-note').textContent='';
 }
@@ -934,6 +945,10 @@ async function jumpTo(abbr){
   const states=topojson.feature(usAtlas,usAtlas.objects.states);
   const feat=states.features.find(f=>FIPS_TO_STATE[f.id.toString().padStart(2,'0')]===abbr);
   if(!feat) return;
+  if(mapMode!=='compare'){
+    // Highlight the state after transition
+    setTimeout(()=>drawHighlight(feat), 650);
+  }
   if(mapMode==='compare'){
     // Zoom both panels independently
     const svgElA=document.getElementById('map-a');
@@ -975,6 +990,28 @@ async function jumpToCounty(fips){
   // Open detail panel
   openDetailPanel(fips, entry.stateAbbr, entry.name, mapState.year, mapState.drug, mapState.metric);
   document.getElementById('zoom-note').innerHTML=`<em>Zoomed to ${entry.name} County, ${entry.stateAbbr} — ↺ Reset</em>`;
+  // Highlight the county after transition settles
+  setTimeout(()=>drawHighlight(entry.feature), 750);
+}
+
+// ── HIGHLIGHT RING ──────────────────────────────────────────────────────────
+function drawHighlight(feature){
+  highlightedFeature = feature;
+  // Remove any existing highlight
+  d3.select('#us-map').select('.highlight-ring').remove();
+  if(!feature) return;
+  // Append highlight path on top of everything
+  const gEl = document.getElementById('us-map-g');
+  if(!gEl) return;
+  d3.select(gEl)
+    .append('path')
+    .attr('class','highlight-ring')
+    .attr('d', path(feature));
+}
+
+function clearHighlight(){
+  highlightedFeature = null;
+  d3.select('#us-map').select('.highlight-ring').remove();
 }
 
 // ── EXPORT ───────────────────────────────────────────────────────────────────
