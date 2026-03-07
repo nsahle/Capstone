@@ -76,7 +76,7 @@
     .summary-high{grid-column:1/-1;}
 
     /* MAP CANVAS */
-    .map-canvas{position:relative;background:#e8edf2;}
+    .map-canvas{position:relative;background:#f0ece4;}
     #us-map, #map-a, #map-b{display:block;width:100%;height:500px;}
     .compare-grid{display:grid;grid-template-columns:1fr 1fr;height:500px;}
     .compare-pane{position:relative;border-right:2px solid var(--gray-mid);overflow:hidden;}
@@ -928,7 +928,7 @@ function exportMap(){
     canvas.height = h * 2;
     const ctx = canvas.getContext('2d');
     ctx.scale(2, 2);
-    ctx.fillStyle = '#e8edf2';
+    ctx.fillStyle = '#f0ece4';
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(img, 0, 0, w, h);
     URL.revokeObjectURL(url);
