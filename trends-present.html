@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trends — Presentation Mode | Naomi Sahle MPH Capstone</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+/* ── DESIGN TOKENS ── */
+:root {
+  --teal:#0D7377; --teal-light:#14a8ae; --teal-bg:rgba(13,115,119,0.08);
+  --navy:#1A2332; --red:#DC2626; --red-bg:rgba(220,38,38,0.08);
+  --card:#F8FAFC; --border:#E2E8F0; --gray:#64748B; --light:#94A3B8;
+  --text:#1A2332; --white:#ffffff;
+  --chart-h:360px; --label:13px; --label-lg:15px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Source Sans 3',sans-serif;background:#f1f5f9;color:var(--text);}
+
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:200;background:var(--navy);
+  height:52px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;box-shadow:0 2px 8px rgba(0,0,0,0.25);
+}
+.nav-brand{color:white;font-size:0.9rem;font-weight:600;}
+.nav-brand span{color:var(--teal-light);}
+.nav-links{display:flex;gap:0;}
+.nav-links a{
+  color:rgba(255,255,255,0.65);text-decoration:none;font-size:0.78rem;font-weight:600;
+  letter-spacing:0.05em;text-transform:uppercase;padding:0 0.9rem;height:52px;
+  display:flex;align-items:center;border-bottom:2px solid transparent;transition:all 0.15s;
+}
+.nav-links a:hover,.nav-links a.active{color:white;border-bottom-color:var(--teal-light);}
+
+/* ── PRESENTATION MODE BUTTON ── */
+#pres-toggle{
+  background:var(--teal);color:white;border:none;border-radius:5px;
+  font-family:'Source Sans 3',sans-serif;font-size:0.78rem;font-weight:700;
+  letter-spacing:0.06em;text-transform:uppercase;padding:0.4rem 1rem;cursor:pointer;
+  display:flex;align-items:center;gap:0.4rem;transition:background 0.15s;
+}
+#pres-toggle:hover{background:var(--teal-light);}
+
+/* ── HERO ── */
+#hero{
+  background:var(--navy);padding:4rem 2.5rem 3rem;
+  border-bottom:3px solid var(--teal);
+}
+.hero-inner{max-width:1100px;margin:0 auto;}
+.hero-eyebrow{font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--teal-light);font-weight:700;margin-bottom:0.75rem;}
+.hero-title{font-family:'Libre Baskerville',serif;font-size:clamp(1.6rem,3.5vw,2.5rem);
+  color:white;line-height:1.25;max-width:780px;margin-bottom:0.75rem;}
+.hero-sub{color:rgba(255,255,255,0.6);font-size:0.95rem;max-width:600px;line-height:1.7;}
+
+/* ── STAT STRIP ── */
+#stat-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  background:rgba(255,255,255,0.05);border-top:1px solid rgba(255,255,255,0.08);
+}
+.stat-block{padding:1.25rem 2rem;border-right:1px solid rgba(255,255,255,0.08);}
+.stat-block:last-child{border-right:none;}
+.stat-num{font-family:'Libre Baskerville',serif;font-size:2rem;color:var(--teal-light);line-height:1;margin-bottom:0.25rem;}
+.stat-label{font-size:0.75rem;color:rgba(255,255,255,0.5);line-height:1.4;}
+
+/* ── PAGE LAYOUT ── */
+.page{max-width:1200px;margin:0 auto;padding:2.5rem 2rem;}
+.section-gap{margin-bottom:3rem;}
+
+/* ── SECTION LABELS ── */
+.section-tag{font-size:0.68rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--teal);margin-bottom:0.4rem;}
+.section-title{font-family:'Libre Baskerville',serif;font-size:1.5rem;color:var(--navy);margin-bottom:0.35rem;}
+.section-desc{font-size:0.9rem;color:var(--gray);line-height:1.65;max-width:700px;}
+
+/* ── CHART CARDS ── */
+.chart-card{
+  background:var(--white);border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 1px 8px rgba(0,0,0,0.05);padding:2rem 2.25rem;position:relative;
+}
+.chart-header{margin-bottom:1.5rem;}
+.chart-title{font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:0.2rem;}
+.chart-sub{font-size:0.8rem;color:var(--light);}
+
+/* ── REVEAL TOGGLE ── */
+.reveal-row{display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.25rem;}
+.reveal-label{font-size:0.8rem;font-weight:600;color:var(--gray);}
+#reveal-btn{
+  background:var(--red);color:white;border:none;border-radius:5px;
+  font-family:'Source Sans 3',sans-serif;font-size:0.82rem;font-weight:700;
+  padding:0.4rem 1.1rem;cursor:pointer;display:flex;align-items:center;gap:0.4rem;
+  transition:all 0.15s;letter-spacing:0.04em;
+}
+#reveal-btn:hover{background:#b91c1c;}
+#reveal-btn.revealed{background:var(--gray);}
+.stage-badge{
+  display:inline-flex;align-items:center;gap:0.35rem;
+  font-size:0.75rem;font-weight:700;padding:0.25rem 0.7rem;border-radius:20px;
+}
+.stage-badge.three{background:rgba(13,115,119,0.12);color:var(--teal);}
+.stage-badge.four{background:rgba(220,38,38,0.12);color:var(--red);}
+
+/* ── CHART LEGEND ── */
+.chart-legend{display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:1.25rem;
+  padding-top:0.75rem;border-top:1px solid var(--border);}
+.legend-item{display:flex;align-items:center;gap:0.45rem;font-size:0.8rem;color:var(--gray);}
+.legend-swatch{width:22px;height:3.5px;border-radius:2px;flex-shrink:0;}
+
+/* ── TWO COLUMN LAYOUT ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.75rem;}
+
+/* ── YEAR TABS + PLAY ── */
+.dot-controls{display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;}
+.year-tabs{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.year-tab{
+  font-family:'Source Sans 3',sans-serif;font-size:0.8rem;font-weight:700;
+  padding:0.35rem 0.9rem;background:white;color:var(--gray);cursor:pointer;
+  border:none;border-right:1px solid var(--border);transition:all 0.15s;
+}
+.year-tab:last-child{border-right:none;}
+.year-tab.active{background:var(--navy);color:white;}
+#play-btn{
+  background:var(--navy);color:white;border:none;border-radius:5px;
+  font-family:'Source Sans 3',sans-serif;font-size:0.8rem;font-weight:700;
+  padding:0.35rem 1rem;cursor:pointer;transition:background 0.15s;
+}
+#play-btn:hover{background:var(--teal);}
+
+/* ── FINDING BOX ── */
+.finding-box{
+  background:var(--navy);border-radius:10px;padding:1.75rem 2rem;
+  margin-top:1.75rem;display:flex;gap:1.25rem;align-items:flex-start;
+}
+.finding-icon{font-size:1.4rem;flex-shrink:0;margin-top:0.1rem;}
+.finding-body h4{font-family:'Libre Baskerville',serif;font-size:1rem;color:white;margin-bottom:0.4rem;}
+.finding-body p{font-size:0.88rem;color:rgba(255,255,255,0.7);line-height:1.65;}
+.hl{color:var(--teal-light);font-weight:700;}
+.hl-red{color:#fca5a5;font-weight:700;}
+
+/* ── TOOLTIP ── */
+.ttip{
+  position:fixed;background:var(--navy);color:white;border-radius:5px;
+  padding:0.45rem 0.85rem;font-size:0.75rem;pointer-events:none;
+  opacity:0;transition:opacity 0.1s;z-index:500;white-space:nowrap;
+  border-left:3px solid var(--teal-light);box-shadow:0 4px 16px rgba(0,0,0,0.25);
+}
+
+/* ── FOOTER ── */
+footer{
+  background:var(--navy);color:rgba(255,255,255,0.55);
+  text-align:center;padding:2rem;font-size:0.8rem;line-height:1.8;
+  border-top:2px solid var(--teal);margin-top:2rem;
+}
+footer strong{color:white;}
+
+/* ══════════════════════════════════════════════════════════════
+   PRESENTATION MODE — toggled by #pres-toggle
+   ══════════════════════════════════════════════════════════════ */
+body.pres-mode{background:white;}
+body.pres-mode nav,
+body.pres-mode #hero,
+body.pres-mode #stat-strip,
+body.pres-mode footer{ display:none!important; }
+body.pres-mode .page{ max-width:100%; padding:1.5rem 2.5rem; }
+body.pres-mode .chart-card{ box-shadow:none; border-color:var(--border); }
+body.pres-mode .section-title{ font-size:1.75rem; }
+body.pres-mode .section-desc{ font-size:1rem; }
+body.pres-mode .chart-title{ font-size:1.1rem; }
+body.pres-mode .chart-sub{ font-size:0.88rem; }
+body.pres-mode .legend-item{ font-size:0.88rem; }
+body.pres-mode .legend-swatch{ width:28px; height:4px; }
+body.pres-mode .axis-lbl{ font-size:14px!important; }
+body.pres-mode .chart-annotation{ font-size:13px!important; }
+body.pres-mode :root{ --chart-h:430px; }
+/* Pres mode: full-width single-col for chart sections */
+body.pres-mode #section-pa .two-col-outer{ grid-template-columns:1fr; }
+body.pres-mode #section-state .dot-plot-svg{ height:420px; }
+
+/* Fixed pres-mode toggle that stays visible */
+#pres-float{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;
+  background:var(--navy);color:white;border:2px solid var(--teal);
+  border-radius:8px;font-family:'Source Sans 3',sans-serif;
+  font-size:0.8rem;font-weight:700;padding:0.5rem 1rem;cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);letter-spacing:0.05em;text-transform:uppercase;
+}
+#pres-float:hover{background:var(--teal);}
+</style>
+</head>
+<body>
+
+<!-- FLOATING PRES TOGGLE (always visible) -->
+<button id="pres-float" onclick="togglePresMode()">⊞ Presentation Mode</button>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">Medicare Part D <span>Formulary Restrictiveness</span></div>
+  <div class="nav-links">
+    <a href="index.html">Overview</a>
+    <a href="map.html">Map Explorer</a>
+    <a href="trends.html" class="active">Trends</a>
+    <a href="background.html">Background</a>
+    <a href="methods.html">Methods</a>
+    <a href="data.html">Data</a>
+  </div>
+  <button id="pres-toggle" onclick="togglePresMode()">⊞ Presentation Mode</button>
+</nav>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Temporal &amp; Geographic Analysis</div>
+    <h1 class="hero-title">National Formulary Trends, 2020–2025</h1>
+    <p class="hero-sub">A targeted, not broad, formulary policy shift concentrated in GLP-1 receptor agonists — while insulin, SGLT-2, and DPP-4 stayed flat.</p>
+  </div>
+</div>
+<div id="stat-strip">
+  <div class="stat-block"><div class="stat-num">7%</div><div class="stat-label">GLP-1 PA Rate · 2020</div></div>
+  <div class="stat-block"><div class="stat-num">~100%</div><div class="stat-label">GLP-1 PA Rate · 2025</div></div>
+  <div class="stat-block"><div class="stat-num">&lt;3%</div><div class="stat-label">All other classes throughout</div></div>
+  <div class="stat-block"><div class="stat-num">2023→24</div><div class="stat-label">Window of sharpest increase</div></div>
+</div>
+
+<!-- ═══════════════════ PAGE CONTENT ═══════════════════ -->
+<div class="page">
+
+  <!-- SECTION 1: PA TRENDS (two-stage reveal) -->
+  <div class="section-gap" id="section-pa">
+    <div class="section-tag">Temporal Analysis</div>
+    <h2 class="section-title">Prior Authorization Rates by Drug Class, 2020–2025</h2>
+    <p class="section-desc">National enrollment-weighted average across all Medicare Part D plans. Use the reveal button below to show the GLP-1 line after presenting the three stable classes.</p>
+
+    <div style="margin-top:1.5rem;">
+      <div class="chart-card">
+        <div class="reveal-row">
+          <span class="stage-badge three" id="stage-badge">● Stage 1: Three stable classes</span>
+          <button id="reveal-btn" onclick="revealGLP1()">▶ Reveal GLP-1</button>
+          <button onclick="resetChart()" style="background:none;border:1px solid var(--border);border-radius:5px;font-family:'Source Sans 3',sans-serif;font-size:0.78rem;color:var(--gray);padding:0.35rem 0.75rem;cursor:pointer;">↺ Reset</button>
+          <span style="font-size:0.75rem;color:var(--light);margin-left:auto;">y-axis rescales automatically on reveal</span>
+        </div>
+        <div id="pa-chart" style="width:100%;height:var(--chart-h);"></div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-swatch" style="background:#DC2626;"></div>GLP-1 Receptor Agonists</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#0D7377;"></div>Insulin</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#2171b5;"></div>SGLT-2 Inhibitors</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#7b4f9e;"></div>DPP-4 Inhibitors</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding-box">
+      <div class="finding-icon">◆</div>
+      <div class="finding-body">
+        <h4>Key Finding: A Targeted, Not Broad, Formulary Change</h4>
+        <p>GLP-1 prior authorization rates surged from <span class="hl">7% in 2020</span> to <span class="hl-red">~100% in 2025</span> — a 14-fold increase concentrated between 2023 and 2024. Insulin, SGLT-2, and DPP-4 inhibitors remained <span class="hl">below 3% throughout</span>. This is a class-specific policy response to GLP-1 adoption as weight-loss treatments, not a systemic tightening of diabetes formularies.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: GLP-1 UM TOOLS -->
+  <div class="section-gap" id="section-um">
+    <div class="section-tag">GLP-1 Deep Dive</div>
+    <h2 class="section-title">GLP-1 Utilization Management Tools, 2020–2025</h2>
+    <p class="section-desc">Prior authorization surged while step therapy collapsed and quantity limits stayed high — showing a shift toward a simpler but more universal gatekeeper mechanism.</p>
+
+    <div style="margin-top:1.5rem;">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Prior Authorization · Step Therapy · Quantity Limits</div>
+          <div class="chart-sub">GLP-1 receptor agonists only · National enrollment-weighted average</div>
+        </div>
+        <div id="um-chart" style="width:100%;height:var(--chart-h);"></div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-swatch" style="background:#DC2626;height:4px;"></div>Prior Authorization <span style="color:var(--red);font-weight:700;margin-left:0.25rem;">(7% → 100%)</span></div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#0D7377;"></div>Step Therapy <span style="color:var(--gray);margin-left:0.25rem;">(8% → &lt;1%)</span></div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#2171b5;height:2px;background-image:repeating-linear-gradient(90deg,#2171b5,#2171b5 5px,transparent 5px,transparent 8px);background-size:8px 2px;"></div>Quantity Limits</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: STATE DOT PLOT -->
+  <div class="section-gap" id="section-state">
+    <div class="section-tag">Geographic Variation</div>
+    <h2 class="section-title">GLP-1 Prior Authorization by State, 2020–2025</h2>
+    <p class="section-desc">Each dot is a state or territory. Hit Play to watch the distribution collapse from scattered to near-universal — the visual tells the story. Screen-record this for your presentation.</p>
+
+    <div style="margin-top:1.5rem;">
+      <div class="chart-card">
+        <div class="dot-controls">
+          <div class="year-tabs">
+            <button class="year-tab active" data-yr="2020">2020</button>
+            <button class="year-tab" data-yr="2021">2021</button>
+            <button class="year-tab" data-yr="2022">2022</button>
+            <button class="year-tab" data-yr="2023">2023</button>
+            <button class="year-tab" data-yr="2024">2024</button>
+            <button class="year-tab" data-yr="2025">2025</button>
+          </div>
+          <button id="play-btn">▶ Play All Years</button>
+          <span style="font-size:0.78rem;color:var(--light);">Hover dots to identify states</span>
+        </div>
+        <div id="dot-plot" style="width:100%;height:360px;"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .page -->
+
+<footer id="footer">
+  <p><strong>Naomi Sahle</strong> · MPH Candidate · University of Pennsylvania Perelman School of Medicine</p>
+  <p>PUBH 7090 Capstone II · 2025–2026 · Mentor: Dr. Frances Shofer · Data: CMS</p>
+</footer>
+
+<div class="ttip" id="ttip"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════
+const YEARS = [2020,2021,2022,2023,2024,2025];
+
+const NT = {
+  2020:{GLP1:0.0703,Insulin:0.0225,SGLT2:0.0020,DPP4:0.0018},
+  2021:{GLP1:0.0688,Insulin:0.0231,SGLT2:0.0018,DPP4:0.0024},
+  2022:{GLP1:0.0640,Insulin:0.0233,SGLT2:0.0007,DPP4:0.0034},
+  2023:{GLP1:0.0712,Insulin:0.0231,SGLT2:0.0006,DPP4:0.0034},
+  2024:{GLP1:0.7805,Insulin:0.0157,SGLT2:0.0006,DPP4:0.0014},
+  2025:{GLP1:0.9998,Insulin:0.0123,SGLT2:0.0010,DPP4:0.0008}
+};
+
+const UM = {
+  2020:{pa:0.0703,st:0.0786,ql:0.9029},
+  2021:{pa:0.0688,st:0.0700,ql:0.9318},
+  2022:{pa:0.0640,st:0.0501,ql:0.9299},
+  2023:{pa:0.0712,st:0.0675,ql:0.9299},
+  2024:{pa:0.7805,st:0.0024,ql:0.9751},
+  2025:{pa:0.9998,st:0.0000,ql:0.9929}
+};
+
+const NAMES = {"AL":"Alabama","AK":"Alaska","AZ":"Arizona","AR":"Arkansas","CA":"California","CO":"Colorado","CT":"Connecticut","DC":"D.C.","DE":"Delaware","FL":"Florida","GA":"Georgia","HI":"Hawaii","ID":"Idaho","IL":"Illinois","IN":"Indiana","IA":"Iowa","KS":"Kansas","KY":"Kentucky","LA":"Louisiana","ME":"Maine","MD":"Maryland","MA":"Massachusetts","MI":"Michigan","MN":"Minnesota","MS":"Mississippi","MO":"Missouri","MT":"Montana","NE":"Nebraska","NV":"Nevada","NH":"New Hampshire","NJ":"New Jersey","NM":"New Mexico","NY":"New York","NC":"North Carolina","ND":"North Dakota","OH":"Ohio","OK":"Oklahoma","OR":"Oregon","PA":"Pennsylvania","RI":"Rhode Island","SC":"South Carolina","SD":"South Dakota","TN":"Tennessee","TX":"Texas","UT":"Utah","VT":"Vermont","VA":"Virginia","WA":"Washington","WV":"West Virginia","WI":"Wisconsin","WY":"Wyoming","PR":"Puerto Rico"};
+
+const STATE_GLP1 = {"2020":{"AL":0.0,"AR":0.0,"AZ":0.0,"CA":0.0378,"CO":0.0201,"CT":0.0,"DC":0.0,"DE":0.0,"FL":0.0013,"GA":0.0,"HI":0.0963,"IA":0.0062,"ID":0.0,"IL":0.0,"IN":0.0,"KS":0.0,"KY":0.0017,"LA":0.1127,"MA":0.0203,"MD":0.0,"ME":0.0,"MI":0.1318,"MN":0.4262,"MO":0.0,"MS":0.0,"MT":0.0,"NC":0.0,"ND":0.8483,"NE":0.0131,"NH":0.0,"NJ":0.0,"NM":0.0159,"NV":0.0,"NY":0.041,"OH":0.252,"OK":0.0,"OR":0.0,"PA":0.0,"PR":0.0,"RI":0.0,"SC":0.0,"SD":0.6867,"TN":0.2083,"TX":0.013,"UT":0.0,"VA":0.0064,"VT":0.0,"WA":0.1291,"WI":0.0739,"WV":0.0957,"WY":0.0},"2021":{"AL":0.0,"AR":0.0,"AZ":0.0,"CA":0.001,"CO":0.0,"CT":0.0,"DC":0.0,"DE":0.0,"FL":0.0007,"GA":0.0116,"HI":0.0643,"IA":0.006,"ID":0.0439,"IL":0.0,"IN":0.0189,"KS":0.0,"KY":0.0131,"LA":0.0891,"MA":0.0257,"MD":0.0,"ME":0.0,"MI":0.0112,"MN":0.4441,"MO":0.0,"MS":0.0506,"MT":0.0,"NC":0.0,"ND":0.786,"NE":0.0114,"NH":0.0,"NJ":0.0,"NM":0.0157,"NV":0.0028,"NY":0.0391,"OH":0.2267,"OK":0.0,"OR":0.0,"PA":0.0,"PR":0.0,"RI":0.0,"SC":0.0,"SD":0.7036,"TN":0.1774,"TX":0.0082,"UT":0.2981,"VA":0.0041,"VT":0.1022,"WA":0.0962,"WI":0.0993,"WV":0.0804,"WY":0.0},"2022":{"AL":0.0,"AR":0.0,"AZ":0.0844,"CA":0.0019,"CO":0.0137,"CT":0.0,"DC":0.0,"DE":0.0,"FL":0.0044,"GA":0.0271,"HI":0.0,"IA":0.0039,"ID":0.0387,"IL":0.0043,"IN":0.0107,"KS":0.0,"KY":0.0042,"LA":0.1131,"MA":0.0105,"MD":0.0,"ME":0.0,"MI":0.0123,"MN":0.4307,"MO":0.0,"MS":0.0338,"MT":0.0,"NC":0.0091,"ND":0.7654,"NE":0.0093,"NH":0.0152,"NJ":0.0191,"NM":0.0048,"NV":0.0021,"NY":0.0384,"OH":0.2071,"OK":0.0,"OR":0.0,"PA":0.0,"PR":0.0,"RI":0.0,"SC":0.0155,"SD":0.6039,"TN":0.1535,"TX":0.0079,"UT":0.0936,"VA":0.0147,"VT":0.0779,"WA":0.1081,"WI":0.0794,"WV":0.0646,"WY":0.0},"2023":{"AL":0.0479,"AR":0.0378,"AZ":0.0785,"CA":0.1744,"CO":0.0351,"CT":0.2483,"DC":0.1596,"DE":0.0837,"FL":0.009,"GA":0.0197,"HI":0.061,"IA":0.0036,"ID":0.0293,"IL":0.0028,"IN":0.0336,"KS":0.0,"KY":0.0,"LA":0.1966,"MA":0.0838,"MD":0.0559,"ME":0.0,"MI":0.0164,"MN":0.4427,"MO":0.0013,"MS":0.0405,"MT":0.0,"NC":0.0339,"ND":0.3013,"NE":0.0074,"NH":0.0342,"NJ":0.0232,"NM":0.0018,"NV":0.0069,"NY":0.0742,"OH":0.1669,"OK":0.0,"OR":0.1748,"PA":0.2941,"PR":0.0,"RI":0.0434,"SC":0.0109,"SD":0.492,"TN":0.0027,"TX":0.0055,"UT":0.1317,"VA":0.0203,"VT":0.0,"WA":0.0645,"WI":0.1546,"WV":0.2167,"WY":0.0},"2024":{"AL":0.8176,"AR":0.8006,"AZ":0.707,"CA":0.8971,"CO":0.7024,"CT":0.9587,"DC":0.8661,"DE":0.7563,"FL":0.671,"GA":0.759,"HI":0.8076,"IA":0.7902,"ID":0.8337,"IL":0.8333,"IN":0.6893,"KS":0.7367,"KY":0.6748,"LA":0.7643,"MA":0.9794,"MD":0.8253,"ME":0.7756,"MI":0.7687,"MN":0.8364,"MO":0.8657,"MS":0.7565,"MT":0.5782,"NC":0.6206,"ND":0.8763,"NE":0.9004,"NH":0.8159,"NJ":0.8404,"NM":0.7124,"NV":0.7218,"NY":0.864,"OH":0.8063,"OK":0.7237,"OR":0.8909,"PA":0.7959,"PR":0.6498,"RI":0.9313,"SC":0.6846,"SD":0.7522,"TN":0.8345,"TX":0.8398,"UT":0.7934,"VA":0.7553,"VT":0.9288,"WA":0.8814,"WI":0.8944,"WV":0.6816,"WY":0.8417},"2025":{"AL":1.0,"AR":1.0,"AZ":0.9765,"CA":0.9991,"CO":1.0,"CT":1.0,"DC":1.0,"DE":0.9675,"FL":1.0,"GA":1.0,"HI":1.0,"IA":1.0,"ID":1.0,"IL":1.0,"IN":1.0,"KS":1.0,"KY":1.0,"LA":1.0,"MA":1.0,"MD":0.9953,"ME":1.0,"MI":1.0,"MN":1.0,"MO":1.0,"MS":1.0,"MT":1.0,"NC":1.0,"ND":1.0,"NE":1.0,"NH":1.0,"NJ":1.0,"NM":1.0,"NV":1.0,"NY":1.0,"OH":1.0,"OK":1.0,"OR":1.0,"PA":0.9992,"PR":1.0,"RI":1.0,"SC":1.0,"SD":1.0,"TN":1.0,"TX":1.0,"UT":1.0,"VA":1.0,"VT":1.0,"WA":1.0,"WI":0.9993,"WV":1.0,"WY":1.0}};
+
+// ═══════════════════════════════════════════════════════════════
+// TOOLTIP
+// ═══════════════════════════════════════════════════════════════
+const ttip = document.getElementById('ttip');
+function showTip(e, html){
+  ttip.innerHTML = html;
+  ttip.style.opacity = '1';
+  ttip.style.left = (e.clientX + 14) + 'px';
+  ttip.style.top  = (e.clientY - 8)  + 'px';
+}
+function hideTip(){ ttip.style.opacity = '0'; }
+
+// ═══════════════════════════════════════════════════════════════
+// CHART 1: PA TRENDS — two-stage reveal
+// ═══════════════════════════════════════════════════════════════
+let glpRevealed = false;
+let paChart = null;
+
+function buildPAChart(){
+  const el = document.getElementById('pa-chart');
+  el.innerHTML = '';
+  const W = el.clientWidth || 900;
+  const H = el.clientHeight || 360;
+  const M = {top:24,right:100,bottom:44,left:62};
+  const w = W - M.left - M.right;
+  const h = H - M.top - M.bottom;
+
+  const svg = d3.select(el).append('svg')
+    .attr('width', W).attr('height', H);
+  const g = svg.append('g').attr('transform', `translate(${M.left},${M.top})`);
+
+  const x = d3.scalePoint().domain(YEARS).range([0, w]).padding(0.05);
+
+  // Y scale: starts at 5% (three-class view), rescales to 100% on reveal
+  const yMax = glpRevealed ? 1.05 : 0.055;
+  const y = d3.scaleLinear().domain([0, yMax]).range([h, 0]);
+
+  // Grid lines
+  const yTicks = glpRevealed ? [0, 0.25, 0.5, 0.75, 1.0] : [0, 0.01, 0.02, 0.03, 0.04, 0.05];
+  yTicks.forEach(v => {
+    g.append('line')
+      .attr('x1', 0).attr('x2', w)
+      .attr('y1', y(v)).attr('y2', y(v))
+      .attr('stroke', '#E2E8F0').attr('stroke-width', 1);
+  });
+
+  // Axes
+  const xAxis = d3.axisBottom(x).tickFormat(d => d);
+  const yAxis = d3.axisLeft(y)
+    .tickValues(yTicks)
+    .tickFormat(d => Math.round(d * 100) + '%');
+
+  g.append('g').attr('transform', `translate(0,${h})`)
+    .call(xAxis)
+    .selectAll('text')
+    .attr('class', 'axis-lbl')
+    .style('font-size', '13px').style('font-family', "'Source Sans 3',sans-serif")
+    .style('fill', '#64748B');
+
+  g.append('g').call(yAxis)
+    .selectAll('text')
+    .attr('class', 'axis-lbl')
+    .style('font-size', '13px').style('font-family', "'Source Sans 3',sans-serif")
+    .style('fill', '#64748B');
+
+  g.selectAll('.domain').attr('stroke', '#E2E8F0');
+  g.selectAll('.tick line').attr('stroke', '#E2E8F0');
+
+  const lineGen = d3.line().x(d => x(d.year)).y(d => y(d.val)).curve(d3.curveCatmullRom);
+
+  // Three stable classes
+  const stableClasses = [
+    {key:'Insulin', color:'#0D7377', label:'Insulin'},
+    {key:'SGLT2',   color:'#2171b5', label:'SGLT-2'},
+    {key:'DPP4',    color:'#7b4f9e', label:'DPP-4'},
+  ];
+
+  stableClasses.forEach((d, di) => {
+    const data = YEARS.map(yr => ({year: yr, val: NT[yr][d.key]}));
+    const path = g.append('path').datum(data)
+      .attr('fill', 'none').attr('stroke', d.color)
+      .attr('stroke-width', 2.5).attr('stroke-linecap', 'round')
+      .attr('d', lineGen);
+    const len = path.node().getTotalLength();
+    path.attr('stroke-dasharray', len).attr('stroke-dashoffset', len)
+      .transition().duration(800).delay(di * 250).attr('stroke-dashoffset', 0);
+
+    // Dots
+    data.forEach(pt => {
+      g.append('circle').attr('cx', x(pt.year)).attr('cy', y(pt.val))
+        .attr('r', 0).attr('fill', d.color)
+        .style('cursor', 'pointer')
+        .on('mouseover', e => showTip(e, `<strong>${d.label} · ${pt.year}</strong><br>${(pt.val*100).toFixed(1)}%`))
+        .on('mouseout', hideTip)
+        .transition().duration(250).delay(di * 250 + YEARS.indexOf(pt.year) * 100).attr('r', 5);
+    });
+
+    // End label
+    const last = data[data.length - 1];
+    g.append('text').attr('x', x(last.year) + 10).attr('y', y(last.val) + 4)
+      .style('font-size', '12px').style('font-family', "'Source Sans 3',sans-serif")
+      .style('fill', d.color).style('font-weight', '600').style('opacity', 0)
+      .attr('class', 'chart-annotation')
+      .text(d.label)
+      .transition().delay(di * 250 + 900).duration(300).style('opacity', 1);
+  });
+
+  // GLP-1 line — only if revealed
+  if(glpRevealed){
+    const glpData = YEARS.map(yr => ({year: yr, val: NT[yr].GLP1}));
+
+    // Area fill
+    const areaGen = d3.area().x(d=>x(d.year)).y0(h).y1(d=>y(d.val)).curve(d3.curveCatmullRom);
+    g.append('path').datum(glpData)
+      .attr('fill', '#DC2626').attr('opacity', 0.08).attr('d', areaGen)
+      .style('opacity', 0).transition().duration(600).style('opacity', 1);
+
+    // Line
+    const glpPath = g.append('path').datum(glpData)
+      .attr('fill', 'none').attr('stroke', '#DC2626')
+      .attr('stroke-width', 4).attr('stroke-linecap', 'round').attr('d', lineGen);
+    const len = glpPath.node().getTotalLength();
+    glpPath.attr('stroke-dasharray', len).attr('stroke-dashoffset', len)
+      .transition().duration(1200).ease(d3.easeQuadInOut).attr('stroke-dashoffset', 0);
+
+    // Dots
+    glpData.forEach(pt => {
+      g.append('circle').attr('cx', x(pt.year)).attr('cy', y(pt.val))
+        .attr('r', 0).attr('fill', '#DC2626')
+        .style('cursor', 'pointer')
+        .on('mouseover', e => showTip(e, `<strong>GLP-1 · ${pt.year}</strong><br>${(pt.val*100).toFixed(1)}%`))
+        .on('mouseout', hideTip)
+        .transition().duration(300).delay(YEARS.indexOf(pt.year) * 130).attr('r', 7);
+    });
+
+    // End label + callout
+    g.append('text').attr('x', x(2025) + 10).attr('y', y(NT[2025].GLP1) + 4)
+      .style('font-size', '13px').style('fill', '#DC2626').style('font-weight', '700')
+      .attr('class', 'chart-annotation').text('GLP-1 RA')
+      .style('opacity', 0).transition().delay(1300).duration(300).style('opacity', 1);
+
+    // Surge annotation
+    const x23 = x(2023), x24 = x(2024);
+    const y23 = y(NT[2023].GLP1), y24 = y(NT[2024].GLP1);
+    g.append('line').attr('x1',x23).attr('y1',y23-10).attr('x2',x24).attr('y2',y24-10)
+      .attr('stroke','#DC2626').attr('stroke-width',1.5).attr('stroke-dasharray','4,3')
+      .style('opacity',0).transition().delay(1400).duration(400).style('opacity',1);
+    g.append('text')
+      .attr('x',(x23+x24)/2).attr('y',y24-18).attr('text-anchor','middle')
+      .attr('class','chart-annotation')
+      .style('font-size','12px').style('fill','#DC2626').style('font-weight','700')
+      .text('7% → 78% in one year')
+      .style('opacity',0).transition().delay(1500).duration(400).style('opacity',1);
+  }
+
+  paChart = {svg, g, x, y, lineGen};
+}
+
+function revealGLP1(){
+  glpRevealed = true;
+  document.getElementById('stage-badge').className = 'stage-badge four';
+  document.getElementById('stage-badge').textContent = '● Stage 2: All four classes — GLP-1 revealed';
+  document.getElementById('reveal-btn').textContent = '✓ GLP-1 Revealed';
+  document.getElementById('reveal-btn').classList.add('revealed');
+  buildPAChart();
+}
+
+function resetChart(){
+  glpRevealed = false;
+  document.getElementById('stage-badge').className = 'stage-badge three';
+  document.getElementById('stage-badge').textContent = '● Stage 1: Three stable classes';
+  document.getElementById('reveal-btn').textContent = '▶ Reveal GLP-1';
+  document.getElementById('reveal-btn').classList.remove('revealed');
+  buildPAChart();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHART 2: GLP-1 UM TOOLS
+// ═══════════════════════════════════════════════════════════════
+function buildUMChart(){
+  const el = document.getElementById('um-chart');
+  el.innerHTML = '';
+  const W = el.clientWidth || 900, H = el.clientHeight || 360;
+  const M = {top:24, right:120, bottom:44, left:62};
+  const w = W - M.left - M.right, h = H - M.top - M.bottom;
+
+  const svg = d3.select(el).append('svg').attr('width',W).attr('height',H);
+  const g = svg.append('g').attr('transform',`translate(${M.left},${M.top})`);
+
+  const x = d3.scalePoint().domain(YEARS).range([0,w]).padding(0.05);
+  const y = d3.scaleLinear().domain([0,1.05]).range([h,0]);
+
+  [0,0.25,0.5,0.75,1.0].forEach(v => {
+    g.append('line').attr('x1',0).attr('x2',w).attr('y1',y(v)).attr('y2',y(v))
+      .attr('stroke','#E2E8F0').attr('stroke-width',1);
+  });
+
+  g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x).tickFormat(d=>d))
+    .selectAll('text').style('font-size','13px').style('fill','#64748B').style('font-family',"'Source Sans 3',sans-serif");
+  g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d=>Math.round(d*100)+'%'))
+    .selectAll('text').style('font-size','13px').style('fill','#64748B').style('font-family',"'Source Sans 3',sans-serif");
+  g.selectAll('.domain,.tick line').attr('stroke','#E2E8F0');
+
+  const lineGen = d3.line().x(d=>x(d.year)).y(d=>y(d.val)).curve(d3.curveCatmullRom);
+
+  const tools = [
+    {key:'ql', color:'#2171b5', width:2, dash:'6,4', label:'Quantity Limits', endPct:true},
+    {key:'st', color:'#0D7377', width:2.5, dash:null, label:'Step Therapy'},
+    {key:'pa', color:'#DC2626', width:4, dash:null, label:'Prior Authorization', area:true},
+  ];
+
+  tools.forEach((t, ti) => {
+    const data = YEARS.map(yr => ({year:yr, val:UM[yr][t.key]}));
+
+    if(t.area){
+      const areaGen = d3.area().x(d=>x(d.year)).y0(h).y1(d=>y(d.val)).curve(d3.curveCatmullRom);
+      g.append('path').datum(data).attr('fill','#DC2626').attr('opacity',0.08).attr('d',areaGen)
+        .style('opacity',0).transition().delay(200).duration(800).style('opacity',1);
+    }
+
+    const path = g.append('path').datum(data)
+      .attr('fill','none').attr('stroke',t.color)
+      .attr('stroke-width',t.width).attr('stroke-linecap','round')
+      .attr('stroke-dasharray', t.dash||'none').attr('d', lineGen);
+
+    if(!t.dash){
+      const len = path.node().getTotalLength();
+      path.attr('stroke-dasharray', len).attr('stroke-dashoffset', len)
+        .transition().duration(1000).delay(ti*300).attr('stroke-dashoffset',0);
+    }
+
+    data.forEach(pt => {
+      g.append('circle').attr('cx',x(pt.year)).attr('cy',y(pt.val))
+        .attr('r',0).attr('fill',t.color).style('cursor','pointer')
+        .on('mouseover',e=>showTip(e,`<strong>${t.label} · ${pt.year}</strong><br>${(pt.val*100).toFixed(1)}%`))
+        .on('mouseout',hideTip)
+        .transition().duration(250).delay(ti*300+YEARS.indexOf(pt.year)*110)
+        .attr('r', t.key==='pa'?6:4);
+    });
+
+    const last = data[data.length-1];
+    const valStr = (last.val*100).toFixed(0)+'%';
+    g.append('text').attr('x',x(last.year)+10).attr('y',y(last.val)+4)
+      .style('font-size','13px').style('fill',t.color).style('font-weight','700')
+      .attr('class','chart-annotation').text(`${t.label}: ${valStr}`)
+      .style('opacity',0).transition().delay(ti*300+1100).duration(300).style('opacity',1);
+  });
+
+  // Annotation: PA surges, ST collapses
+  g.append('text').attr('x',x(2024)-5).attr('y',y(0.5))
+    .attr('text-anchor','end').attr('class','chart-annotation')
+    .style('font-size','12px').style('fill','#DC2626').style('font-weight','600')
+    .text('PA surges ↑')
+    .style('opacity',0).transition().delay(1600).duration(400).style('opacity',1);
+  g.append('text').attr('x',x(2024)-5).attr('y',y(0.08))
+    .attr('text-anchor','end').attr('class','chart-annotation')
+    .style('font-size','12px').style('fill','#0D7377').style('font-weight','600')
+    .text('Step therapy collapses ↓')
+    .style('opacity',0).transition().delay(1700).duration(400).style('opacity',1);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHART 3: STATE DOT PLOT
+// ═══════════════════════════════════════════════════════════════
+let dotYear = 2020;
+let dotPlaying = false;
+let dotInterval = null;
+
+function buildDotPlot(yr, animate){
+  const el = document.getElementById('dot-plot');
+  const W = el.clientWidth || 900, H = el.clientHeight || 360;
+  const M = {top:20, right:30, bottom:50, left:70};
+  const w = W - M.left - M.right, h = H - M.top - M.bottom;
+
+  // SVG may already exist — update rather than rebuild
+  let svg = d3.select(el).select('svg');
+  let g;
+  if(svg.empty()){
+    svg = d3.select(el).append('svg').attr('width',W).attr('height',H).attr('id','dot-svg');
+    g = svg.append('g').attr('transform',`translate(${M.left},${M.top})`).attr('id','dot-g');
+
+    // Static axes and grid (only built once)
+    const y = d3.scaleLinear().domain([0,1]).range([h,0]);
+    const yTicks = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0];
+    yTicks.forEach(v => {
+      g.append('line').attr('class','grid').attr('x1',0).attr('x2',w)
+        .attr('y1',y(v)).attr('y2',y(v)).attr('stroke',v%0.25===0?'#CBD5E1':'#E2E8F0').attr('stroke-width',v%0.25===0?1:0.5);
+      if(v%0.25===0){
+        g.append('text').attr('class','axis-lbl').attr('x',-10).attr('y',y(v)+4)
+          .attr('text-anchor','end').style('font-size','13px')
+          .style('font-family',"'Source Sans 3',sans-serif").style('fill','#64748B')
+          .text(Math.round(v*100)+'%');
+      }
+    });
+
+    // Year watermark
+    g.append('text').attr('id','yr-watermark').attr('x',w/2).attr('y',h/2+20)
+      .attr('text-anchor','middle').attr('font-family',"'Libre Baskerville',serif")
+      .attr('font-size', Math.min(w*0.18,100)).attr('fill','rgba(26,35,50,0.05)')
+      .attr('font-weight','700').attr('pointer-events','none').text('2020');
+  } else {
+    g = svg.select('#dot-g');
+  }
+
+  // Update year watermark
+  g.select('#yr-watermark').text(yr);
+
+  // Tabs
+  document.querySelectorAll('.year-tab').forEach(b => b.classList.toggle('active', parseInt(b.dataset.yr)===yr));
+
+  const y = d3.scaleLinear().domain([0,1]).range([h,0]);
+  const states = Object.keys(STATE_GLP1[yr.toString()]).sort();
+  const x = d3.scaleBand().domain(d3.range(states.length)).range([0,w]).padding(0.15);
+  const colorScale = d3.scaleSequential(d3.interpolate('#CBD5E1','#1A2332')).domain([0,1]);
+
+  const dots = g.selectAll('.sdot').data(
+    states.map((abbr,i) => ({abbr, val:STATE_GLP1[yr.toString()][abbr]||0, i})),
+    d => d.abbr
+  );
+
+  dots.enter().append('circle').attr('class','sdot')
+    .attr('cx', d => x(d.i)+x.bandwidth()/2)
+    .attr('cy', h)
+    .attr('r', 8)
+    .attr('fill', d => colorScale(d.val))
+    .attr('stroke', 'white').attr('stroke-width', 1.5)
+    .style('opacity', d => d.val===0 ? 0.3 : 0.85)
+    .style('cursor','pointer')
+    .on('mouseover', function(e,d){
+      d3.select(this).attr('r',12).style('opacity',1);
+      showTip(e, `<strong>${NAMES[d.abbr]||d.abbr}</strong><br>${(d.val*100).toFixed(1)}%`);
+    })
+    .on('mouseout', function(e,d){
+      d3.select(this).attr('r',8).style('opacity', d.val===0?0.3:0.85);
+      hideTip();
+    })
+    .merge(dots)
+    .transition().duration(animate ? 700 : 0).ease(d3.easeQuadInOut)
+    .attr('cx', d => x(d.i)+x.bandwidth()/2)
+    .attr('cy', d => y(d.val))
+    .attr('fill', d => colorScale(d.val))
+    .style('opacity', d => d.val===0 ? 0.3 : 0.85);
+
+  dots.exit().remove();
+
+  // Stats annotation
+  const vals = states.map(s => STATE_GLP1[yr.toString()][s]||0);
+  const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const above50 = vals.filter(v=>v>0.5).length;
+  g.selectAll('.stat-ann').remove();
+  g.append('text').attr('class','stat-ann chart-annotation')
+    .attr('x',w).attr('y',h+36).attr('text-anchor','end')
+    .style('font-size','12px').style('fill','#64748B')
+    .style('font-family',"'Source Sans 3',sans-serif")
+    .text(`National avg: ${(mean*100).toFixed(1)}%  ·  ${above50} of ${states.length} states above 50%`);
+}
+
+// Tabs
+document.querySelectorAll('.year-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(dotPlaying) stopPlay();
+    dotYear = parseInt(btn.dataset.yr);
+    buildDotPlot(dotYear, true);
+  });
+});
+
+// Play/Stop
+function stopPlay(){
+  dotPlaying = false;
+  clearInterval(dotInterval);
+  document.getElementById('play-btn').textContent = '▶ Play All Years';
+}
+document.getElementById('play-btn').addEventListener('click', () => {
+  if(dotPlaying){ stopPlay(); return; }
+  dotPlaying = true;
+  document.getElementById('play-btn').textContent = '⏹ Stop';
+  dotYear = 2020;
+  let idx = 0;
+  buildDotPlot(YEARS[idx], true);
+  dotInterval = setInterval(() => {
+    idx++;
+    if(idx >= YEARS.length){ stopPlay(); return; }
+    dotYear = YEARS[idx];
+    buildDotPlot(dotYear, true);
+  }, 1500);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// PRESENTATION MODE
+// ═══════════════════════════════════════════════════════════════
+let presMode = false;
+function togglePresMode(){
+  presMode = !presMode;
+  document.body.classList.toggle('pres-mode', presMode);
+  const label = presMode ? '✕ Exit Presentation Mode' : '⊞ Presentation Mode';
+  document.getElementById('pres-float').textContent = label;
+  if(document.getElementById('pres-toggle')){
+    document.getElementById('pres-toggle').textContent = label;
+  }
+  // Rebuild charts at new size after layout settles
+  setTimeout(() => {
+    buildPAChart();
+    buildUMChart();
+    buildDotPlot(dotYear, false);
+  }, 80);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+buildPAChart();
+buildUMChart();
+buildDotPlot(2020, false);
+
+// Rebuild on resize
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    buildPAChart();
+    buildUMChart();
+    buildDotPlot(dotYear, false);
+  }, 200);
+});
+</script>
+</body>
+</html>
